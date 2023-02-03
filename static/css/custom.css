@@ -1,0 +1,76 @@
+/*!
+ * Annas custom css
+ */
+
+/*! normalize.css v3.0.0 | MIT License | git.io/normalize */
+html {
+  font-family: sans-serif;
+  -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+}
+/*  background-color:#0B2027;; */
+
+body {
+  margin: 0;
+  background-color:#F2E9E4;
+}
+table, th, td {
+  border: 1px solid;
+}
+#login{
+  background-image: url('peep.png');
+}
+
+/*  background-color:#40798;
+
+.navbar-default {
+    background-color: #40798;
+    border-color: #E7E7E7;
+}
+
+.custom-navbar {
+        background-color: #40798;
+}
+
+*/
+#form-box {
+    box-sizing: border-box;
+    margin: 2rem 0;
+    background: #FFAFB8;
+    padding: 2rem;
+    border-radius: 10px;
+}
+
+/* custom CSS for BS sticky footer */
+
+section > .container {
+  padding: 120px 1.5rem 0;
+}
+
+.footer {
+  background-color: #F3E7DA;
+}
+
+.footer > .container {
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+}
+h1 {
+    padding-top: 1em;
+    color: #EA5463;
+}
+
+h2 {
+    color: #666;
+}
+
+thead, th {
+    border: none;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+
+

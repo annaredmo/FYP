@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+{% block body %}
+<h1 xmlns="http://www.w3.org/1999/html">LOGIN TO MY_MUSIC</h1>
+<style>
+    :root {
+  color-scheme: light dark;
+}
+</style>
+<body id="login">
+<div class="container-fluid mt-3">
+            <div class="col-md-6">
+
+            <div class="col-sm-6">
+                <p class="lead">Make your own fan made soundtracks for your favourite movies.</p>
+                <p class="lead">To get started, log in </p>
+                <!-- login form -->
+                <div id="form-box">
+                    <form action="" method="POST">
+  	            <div class="form-group">
+		            <label>Username</label>
+                    <input type="text" name="username" class="form-control" value={{request.form.username}}>
+  	            </div>
+  	            <div class="form-group">
+          			<label>Password</label>
+  		        	<input type="password" name="password" class="form-control" value={{request.form.password}}>
+		        </div>
+	            <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+                <!-- end login form -->
+                </div>
+            </div>
+        </div>
+        </body>
+
+  {% endblock %}
+
+
+
+
+
+
+<!-- WASNT THERE A HORIZONTAL TAG ?? CHECK THAT https://codepen.io/cristinaconacel/pen/XBLVre
+ also still a big long?? how do other websites deal with small logon on big page??
+ Looks at this login page for BookHopper https://python-adv-web-apps.readthedocs.io/en/latest/flask_forms.html#resources
+
+     <img src="/static/images/peep.png" class="img-fluid " alt="...">
+            </div>
+
+        </div>
+ -->

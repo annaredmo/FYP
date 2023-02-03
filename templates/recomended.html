@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+{% block body %}
+<h1>Add Reccomended songs to your playlist from the official soundtrack</h1>
+  <input id="song_search" type="text" placeholder="Search Song..">
+
+<body>
+<div class="container mt-5">
+<div class=row">
+	<div class="btn-group-vertical">
+  <button type="button" class="btn btn-primary">Apple</button>
+  <button type="button" class="btn btn-primary">Samsung</button>
+  <button type="button" class="btn btn-primary">Sony</button>
+</div>
+</div>
+  <div class="row">
+        <div class="col-sm-4">
+          <ul>
+            <li>
+            	<button type="submit" class="btn btn-primary">Official Soundrack</button>
+            </li>
+            <li>
+  	            <button type="submit" class="btn btn-primary">Search</button>
+            </li>
+            <li>
+  	            <button type="submit" class="btn btn-primary">Reccomended</button>
+            </li>
+          </ul>
+    </div>
+    <div class="col-sm-4">
+		<table class="table  table-hover">
+			<tr>
+				<th>official soundtrack</th>
+			</tr>
+			{% for song in tracks %}
+			<tr>
+				<td><a href="play_playlist/{{song.id}}"  class="btn btn-default">{{song}}</a></td>
+				<td><a href="/Remove" class="btn btn-danger pull-right ">Remove</a></td>
+			</tr>
+			{% endfor %}
+        </table>
+    </div>
+    <div class="col-sm-4">
+        <table class="table  table-hover">
+			<tr>
+				<th>TRACKS</th>
+			</tr>
+			{% for song in tracks %}
+			<tr>
+				<td><a href="play_playlist/{{song.id}}"  class="btn btn-default">{{song}}</a></td>
+				<td><a href="/Remove" class="btn btn-danger pull-right ">Remove</a></td>
+			</tr>
+			{% endfor %}
+        </table>
+    </div>
+  </div>
+</div>
+
+</body>
+
+
+{% endblock %}

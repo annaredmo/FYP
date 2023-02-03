@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script>
+		$(document).on("click", "#list1 li", function () {
+			var selectedItem = $(this).text();
+			$.ajax({
+				type: 'POST',
+				url: '/move_item',
+				data: JSON.stringify({ 'item': selectedItem, 'fromList': 'list1', 'toList': 'list2' }),
+				contentType: 'application/json;charset=UTF-8',
+				success: function (response) {
+					console.log(response);
+					$(this).remove();
+				}
+			});
+		});
+
+		$(document).on("click", "#list2 li", function () {
+			var selectedItem = $(this).text();
+			$.ajax({
+				type: 'POST',
+				url: '/move_item',
+				data: JSON.stringify({ 'item': selectedItem, 'fromList': 'list2', 'toList': 'list1' }),
+				contentType: 'application/json;charset=UTF-8',
+				success: function (response) {
+					console.log(response);
+					$(this).remove();
+				}
+			});
+		});
+	</script>
+</head>
+
+<body>
+	<ul id="list1">
+		{% for item in list1 %}
+		<li>{{ item }}</li>
+		{% endfor %}
+	</ul>
+	<ul id="list2">
+		{% for item in list2 %}
+		<li>{{ item }}</li>
+		{% endfor %}
+	</ul>
+</body>
+
+</html>

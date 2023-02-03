@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+{% block body %}
+<h1>Welcome {{session.username}} </h1>
+
+<div class="container">
+  <a href="/create_playlist" class="btn btn-info" role="button">Create Playlist</a>
+
+<form method="post">
+<table class="table table-bordered table-stripped table-hover">
+	<tr>
+		<th>PLAYLIST NAME</th>
+		<th></th>
+	</tr>
+	{% for playlist in playlists %}
+	<tr>
+		<td><a href="play_playlist/{{playlist.id}}"  class="btn btn-default">{{playlist.playlisttitle}}</a></td>
+
+		<td></td>
+		<td><a href="play_playlist/{{playlist.id}}" class="btn btn-default pull-right">PLAY</a></td>
+		<td><a href="/Movies" class="btn btn-danger pull-right ">Add</a></td>
+		<td><a href="delete_playlist/{{playlist.playlisttitle}}" class="btn btn-default pull-right">DELETE</a></td>
+		<!-- td><a href="/recomended" class="btn btn-info" role="button">see recomended</a></td -->
+
+		<!--form action="{{ url_for('recomended') }}" method="POST">
+    		<input id="playlistId" name="playlistId" type="hidden" value="{{playlist.playlisttitle}}">
+    		<button type="submit"> History </button>
+		</form>
+		 <td> <input id="playlistId" name="playlistId" type="hidden" value="{{ playlist.id }}">
+		 <td><button type="submit" name="edit" value="{{ playlist.id }}" formmethod="post">recomended</button></td>
+		</form>
+		<td></td-->
+
+		            <td><form action="/recomended" method="POST"><button formtarget="_blank"
+                        name="input" type="submit"
+                        formaction="/recomended"
+                        value={{playlist.playlisttitle}}>Recommend Tracks</button>
+					</form>
+					</td>
+	</tr>
+	{% endfor %}
+</table>
+</form>
+</div>
+
+{% endblock %}
