@@ -28,14 +28,23 @@
 		 <td> <input id="playlistId" name="playlistId" type="hidden" value="{{ playlist.id }}">
 		 <td><button type="submit" name="edit" value="{{ playlist.id }}" formmethod="post">recomended</button></td>
 		</form>
-		<td></td-->
+		<td></td>
 
-		            <td><form action="/recomended" method="POST"><button formtarget="_blank"
+		            <td><form action="/recomended" method="POST">
+		            <button formtarget="_blank"
                         name="input" type="submit"
                         formaction="/recomended"
                         value={{playlist.playlisttitle}}>Recommend Tracks</button>
 					</form>
-					</td>
+					</td-->
+		<td >
+
+  <form id = "PlaylistSelect" action="/recomended" method="POST">
+    <input type="hidden" name="playlistTitle" value={{playlist.playlisttitle}}>
+	  <input type="hidden" name="button_name" value="Official Soundtrack">
+    <button formaction="/recomended" type="submit">Recommend Tracks</button>
+  </form>
+</td>
 	</tr>
 	{% endfor %}
 </table>

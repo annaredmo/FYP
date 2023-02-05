@@ -310,52 +310,74 @@ def register():
 def contact():
     return render_template('contact.html')
 
+def getOfficialPlaylist(playlistName):
+    lst=[]
+    spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+
+    return lst
+
+
 #todo - need a save button for updated list - to go to spotify - need function like this savePlayList
 
 class make_recommended(Form): #Not working
-    title = StringField('input')
+    title = StringField('playlistTitle')
 
 @app.route('/recomended' ,methods=['GET', 'POST'])#/<string:playlist>') # spell check
 @is_logged_in
 def recomended(): #(playlist):
-    if request.method == 'POST' :  # if the request is POST
-        print("IN RECOMMENDED POST")
+    if request.method == 'GET' :  # if the request is POST
+        print("IN RECOMMENDED GET")
     # goto spotify and get tracks for playlistId
     # return render_template('recommender.html', tracks=tracks)  # sends in the playlist we just got from database
+
+    ls={}
     form = make_playlist(request.form)  # make the playlist using the form element
+    #if form.get
     # TODO dont know how to use class way - see add_playlist.html
-    playlistName = request.form['input'] #.title.data  # get the data entered in the form and use that as the name for the playlist
-    #playlistName = 'madonna'
+    playlistName = request.form.get("playlistTitle")
+    action = request.form.get("load_button")
+    #playlistName = request.form['playlistTitle'] #.title.data  # get the data entered in the form and use that as the name for the playlist
+
 
     # using the Name get the spoitify link - if it suceeds - delete from database
-    try:
-        myCursor = mysql.connection.cursor()
-        # works         result = myCursor.execute("SELECT spotifylink from playlist WHERE playlisttitle = 'playlist'")
-        if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
-                            (session['id'], playlistName)):
-            playlistLink = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
-            spotifyLink = playlistLink[0]['spotifyLink']
-            spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-            #tracks = spotfyObject.??getplaylistcontent??(spotifyId, spotifyLink)
-            # get songs in your playlist and send them to screen
-            lst = spotifyObject.playlist_items(spotifyLink)
-            print('CONTENTS OF LIST: ', playlistName)
-            tracks=[]
+    if playlistName != None:
+        if session.get("playListTracks") is None: # Only load from DB if not already loaded
+            session["playListTracks"] = []
+            try:
+                # TODO only get from db if  empty
+                myCursor = mysql.connection.cursor()
+                # works         result = myCursor.execute("SELECT spotifylink from playlist WHERE playlisttitle = 'playlist'")
+                if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
+                                    (session['id'], playlistName)):
+                    playlistLink = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
+                    spotifyLink = playlistLink[0]['spotifyLink']
+                    spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+                    #tracks = spotfyObject.??getplaylistcontent??(spotifyId, spotifyLink)
+                    # get songs in your playlist and send them to screen
+                    lst = spotifyObject.playlist_items(spotifyLink)
+                    print('CONTENTS OF LIST: ', playlistName)
+                    tracks=[]
+                    for j in lst['items']:
+                        tracks.append(j['track']['name'])
+                        session["playListTracks"].append(j['track']['name'])
+            except:
+                flash("Error getting Playlist tracks from Spotify", 'error')
+                return redirect(url_for('dashboard'))
+
+    # TODO do we set back to 0 every time ??
+    session["selectTracksFrom"] = []
+    if action != None:
+        if action == "Recommended":
             for j in lst['items']:
-                tracks.append(j['track']['name'])
-            return render_template('recomended.html', tracks=tracks)  # open this function in the rgisterpage
+                session["selectTracksFrom"].append(j['track']['name'])
+        if action == "Official Soundtrack": #TODO function to get from spotify usingplayListName
+            #lst = getOfficialPlaylist(playlistName) #TODO items
+            for j in session["playListTracks"]:
+                session["selectTracksFrom"].append(j) #j['track']['name'])
+        if action == "Search":
+            session["selectTracksFrom"].append("I am searching")  # j['track']['name'])
 
-        else:
-            msg = "NO PLAYLIST FOUND "
-
-        myCursor.close()
-    except:
-        flash("Playlist didnt get deleted", 'error')
-        pass
-    # message??
-    return redirect(url_for('dashboard'))
-
-    return render_template('recomended.html',trask=['playlist'])  # render_template makes it possible to bring in/import html files
+    return render_template('recomended.html')  # open this function in the rgisterpage
 
 
 @app.route('/your-url')
