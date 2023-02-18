@@ -1,53 +1,169 @@
 {% extends 'layout.html' %}
 {% block body %}
 <h1>Add Reccomended songs to your playlist from the official soundtrack</h1>
-  <input id="song_search" type="text" placeholder="Search Song..">
+<h1> For {{session['playListName']}}</h1>
 
 <body>
 
-<div class="container mt-5">
-    <div class="row col-4">
-        <form method="POST" class="form-register">
+<form method="POST" class="form-register">
+  <div class="form-group row">
+    <div class="col-sm-6">
+      <input type="submit" name="load_button" value="Official Soundtrack" class="btn btn-primary">
+    </div>
+    <div class="col-sm-6">
+      <div class="input-group">
+        <input type="text" id="song-name" name="song_name" class="form-control" maxlength="30">
+        <div class="input-group-append">
+          <button type="submit" name="load_button" value="Search" class="btn btn-primary">Search</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-6">
+      <input type="submit" name="load_button" value="Reccomended" class="btn btn-primary">
+    </div>
+    <div class="col-sm-6">
+      <button type="button" id="save-button" onclick="save_tracks()" class="btn btn-danger pull-right">SAVE tracks</button>
+    </div>
+  </div>
+</form>
+
+
+
+
+        <!--form method="POST" class="form-register">
 
             <input type="submit" name="load_button" value="Official Soundtrack">
             <input type="submit" name="load_button" value="Search">
-            <input type="submit" name="load_button" value="Official Soundtrack">
+            <input type="submit" name="load_button" value="Reccomended">
+            <button type="button" id="save-button" onclick="save_tracks()"  class="btn btn-danger pull-right ">SAVE tracks</button>
 
-        </form>
-    </div>
+        </form -->
+
 
 <div class="container mt-5">
 
   <div class="row">
 
     <div class="col-sm-4">
-		<table class="table  table-hover">
+
+		<table class="table  table-hover" id="recommendedTable">
+            <tbody id="tbodyrec">
 			<tr>
 				<th>Official Soundtrack</th>
 			</tr>
 			{% for song in session["selectTracksFrom"] %}
-			<tr>
-				<td><a href="play_playlist/{{song.id}}"  class="btn btn-default">{{song}}</a></td>
-				<td><a href="/Remove" class="btn btn-danger pull-right ">Add</a></td>
+                <tr>
+                  <td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
+                  <td class="move-cell">
+                    <button type="button" class="btn btn-danger" onclick="transferTrack(this)">Add</button>
+                  </td>
+
 			</tr>
 			{% endfor %}
+            </tbody>
         </table>
     </div>
     <div class="col-sm-4">
-        <table class="table  table-hover">
+        <table class="table  table-hover border" id="playListTable" >
+            <tbody id="tbodylist">
 			<tr>
 				<th>Track in </th>
 			</tr>
 			{% for song in session["playListTracks"] %}
 			<tr>
-				<td><a href="play_playlist/{{song.id}}"  class="btn btn-default">{{song}}</a></td>
-				<td><a href="/Remove" class="btn btn-danger pull-right ">Remove</a></td>
+                <tr>
+  <td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
+  <td class="move-cell">
+    <button type="button" class="btn btn-danger" onclick="removeTrack(this)">Remove</button>
+  </td>
+
+
 			</tr>
 			{% endfor %}
+                        </tbody>
         </table>
     </div>
   </div>
-</div>
+<script>
+function removeTrack(pressedRow) {
+    /* This method will delete a row */
+        console.log("removeTrack: ",pressedRow.parentNode.parentNode);
+
+    pressedRow.parentNode.parentNode.remove();
+    }
+</script>
+<script>
+// works but only if 1 row exists
+function transferTrack(pressedRow) {
+      // Get the clicked row and its first data cell
+      const clickedRow = pressedRow.parentNode.parentNode;
+      const clickedCell = clickedRow.querySelector('td:first-child');
+
+      // Create a new row with an exact copy of the first cell of the clicked row
+      const playlistTable = document.getElementById('playListTable');
+      const playlistTBody = playlistTable.tBodies[0];
+      const newRow = playlistTBody.insertRow(1);
+      const newCell = newRow.insertCell(0);
+      newCell.className = clickedCell.className;
+      newCell.setAttribute('data-song-id', clickedCell.getAttribute('data-song-id'));
+      newCell.textContent = clickedCell.textContent;
+
+      // Add a Remove button to the new row
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn btn-danger';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', function() {
+        removeTrack(this);
+      });
+
+      const removeCell = newRow.insertCell(1);
+      removeCell.classList.add('move-cell');
+      removeCell.appendChild(removeButton);
+
+      pressedRow.parentNode.parentNode.remove();
+
+      console.log("table = ",playlistTable);
+
+}
+
+
+ </script>
+
+<script>
+    function save_tracks(){
+        // Get the table data
+        var tableData=[];
+        var table = document.querySelector('#playListTable');
+        var rows = table.querySelectorAll('tr');
+
+        for (var i = 0; i < rows.length; i++) {
+            var tdElements = rows[i].querySelectorAll('td');
+            for (var j = 0; j < tdElements.length; j++) {
+                var idValue = tdElements[j].getAttribute('data-song-id');    //('id');
+                if (idValue) {
+                    console.log(idValue);
+                    tableData.push(idValue);
+                }
+            }
+        }
+        console.log('Save tracks',tableData);
+
+        // Send the data to the server using an XMLHttpRequest
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/update_table', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            console.log('Table data was successfully sent to the server');
+          }
+        };
+        xhr.send(JSON.stringify({table_data: tableData}));
+    alert("Successfully saved to Play List");
+}
+</script>
 </div>
 
 </body>

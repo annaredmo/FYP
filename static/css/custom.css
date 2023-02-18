@@ -73,4 +73,21 @@ thead, th {
 }
 
 
+.row-divider {
+        height: 3rem;
+}
 
+.move-cell {
+  vertical-align: middle;
+  text-align: center;
+  border: 1px solid black;
+}
+
+/*
+
+Make bs-success bright pink - works on navbar
+   .bg-success {
+        background-color: #9c27b0 !important;
+      }
+
+*/

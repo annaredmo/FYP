@@ -1,6 +1,7 @@
 
-<nav class="navbar navbar-expand-sm bg-light justify-content-center">
-  <ul class="navbar-nav">
+<nav class="navbar navbar-expand-sm bg-success justify-content-center">
+  <!-- me-auto start from end = left ?? -->
+  <ul class="navbar-nav me-auto mb-2 mb-lg-0">
     <li class="nav-item">
       <a class="nav-link" href="/">Home</a>
     </li>
@@ -16,8 +17,11 @@
     <li class="nav-item">
       <a class="nav-link" href="/delete">Delete Account</a>
     </li>
+  </ul>
+
+  <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
     {% if session.logged_in %}
-      <li class="nav-item">
+      <li class="nav-item justify-content-end">
         <a class="nav-link" href="/dashboard">DashBoard</a>
       </li>
       <li class="nav-item">

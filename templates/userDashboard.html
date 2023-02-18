@@ -1,54 +1,28 @@
 {% extends 'layout.html' %}
 {% block body %}
-<h1>Welcome {{session.username}} </h1>
-
+<!-- TODO do I need rows in container ?? container-fluid make it width of screen not working - look at layout-->
 <div class="container">
-  <a href="/create_playlist" class="btn btn-info" role="button">Create Playlist</a>
+<div class="row g-4">
+	<h1>Welcome {{session.username}} </h1>
+	<a href="/create_playlist" class="btn btn-success" role="button">Create A New Playlist</a>
 
-<form method="post">
-<table class="table table-bordered table-stripped table-hover">
-	<tr>
-		<th>PLAYLIST NAME</th>
-		<th></th>
-	</tr>
-	{% for playlist in playlists %}
-	<tr>
-		<td><a href="play_playlist/{{playlist.id}}"  class="btn btn-default">{{playlist.playlisttitle}}</a></td>
-
-		<td></td>
-		<td><a href="play_playlist/{{playlist.id}}" class="btn btn-default pull-right">PLAY</a></td>
-		<td><a href="/Movies" class="btn btn-danger pull-right ">Add</a></td>
-		<td><a href="delete_playlist/{{playlist.playlisttitle}}" class="btn btn-default pull-right">DELETE</a></td>
-		<!-- td><a href="/recomended" class="btn btn-info" role="button">see recomended</a></td -->
-
-		<!--form action="{{ url_for('recomended') }}" method="POST">
-    		<input id="playlistId" name="playlistId" type="hidden" value="{{playlist.playlisttitle}}">
-    		<button type="submit"> History </button>
-		</form>
-		 <td> <input id="playlistId" name="playlistId" type="hidden" value="{{ playlist.id }}">
-		 <td><button type="submit" name="edit" value="{{ playlist.id }}" formmethod="post">recomended</button></td>
-		</form>
-		<td></td>
-
-		            <td><form action="/recomended" method="POST">
-		            <button formtarget="_blank"
-                        name="input" type="submit"
-                        formaction="/recomended"
-                        value={{playlist.playlisttitle}}>Recommend Tracks</button>
-					</form>
-					</td-->
-		<td >
-
-  <form id = "PlaylistSelect" action="/recomended" method="POST">
-    <input type="hidden" name="playlistTitle" value={{playlist.playlisttitle}}>
-	  <input type="hidden" name="button_name" value="Official Soundtrack">
-    <button formaction="/recomended" type="submit">Recommend Tracks</button>
-  </form>
-</td>
-	</tr>
-	{% endfor %}
-</table>
-</form>
+	<table class="table table-fluid table-success table-striped table-bordered table-stripped table-hover align-middle text-centre">
+		<tbody>
+			{% for playlist in playlists %}
+			<!-- TODO - what type of button do I want?? What Color table ?? currently green - do I wan it full width??-->
+			<tr>
+				<td><img src="{{playlist.imgLink}}" style="width:104px;height:142px;"><a  href="play_playlist/{{playlist.id}}"  class="btn btn-default">{{playlist.playlisttitle}}</a></td>
+				<!-- TODO causes security error need python method to deal with this - open in new tap etc -->
+				<td><a href="https://open.spotify.com/playlist/{{playlist.spotifylink}}"><button class="btn btn-outline-success">Play</button></a></td>
+				<td><a href="delete_playlist/{{playlist.playlisttitle}}" ><button class="btn btn-hover">Delete</button></a></td>
+				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
+					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">
+					<input type="hidden" name="button_name" value="Official Soundtrack">
+					<button formaction="/recomended" type="submit">Add Tracks</button>
+				</form></td>
+			{% endfor %}
+		</tbody>
+	</table>
 </div>
-
+</div>
 {% endblock %}

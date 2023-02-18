@@ -15,6 +15,13 @@ from requests.exceptions import ConnectionError
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+import json
+from imdb import Cinemagoer
+
+
+ia = Cinemagoer()
+
+
 spotifyObjectG = 0
 spotifyIdG = 0
 userData={}
@@ -174,14 +181,16 @@ def logout():
 @app.route('/dashboard') # 2 ways to get in - via click on button OR from login straight
 @is_logged_in  # @ signifys a a decerator which is a function that extends another function
 def dashboard():
+    #session['playListName']=False
     myCursor = mysql.connection.cursor()
     # TODO: change playlist to use spotifylink as key
-    result = myCursor.execute("SELECT playlisttitle from playlist WHERE userid = %s", [session['id']]) # TODO: move to spotify id (provider?)
-    playlists = myCursor.fetchall()
+    result = myCursor.execute("SELECT playlisttitle,imgLink,spotifylink from playlist WHERE userid = %s", [session['id']]) # TODO: move to spotify id (provider?)
+    #playlists = myCursor.fetchall()
+    session['playlist']=myCursor.fetchall()
     myCursor.close()
     if result > 0:
-        # NEED TO ADD TO function recommended
-        return render_template('userDashboard.html', playlists=playlists)  # sends in the playlist we just got from database
+        # or can just access from session in dashboard
+        return render_template('userDashboard.html', playlists=session['playlist'])  # sends in the playlist we just got from database
     else:
         msg = "NO PLAYLIST FOUND "
         return render_template('userDashboard.html', msg=msg)   # view function is defined to handle requests to the home page
@@ -189,6 +198,9 @@ def dashboard():
 
 class make_playlist(Form):
     title = StringField('Name', [validators.Length(min=1, max=25)])
+
+def selectMovie(movieName):
+    movieResults = ia.search_movie(movieName)
 
 
 @app.route('/create_playlist', methods=['GET', 'POST'])
@@ -204,7 +216,25 @@ def create_playlist():
         user_name = spotifyObject.current_user()  # user name assignmenet
         try:
             # TODO: spotify will add same name twice - need to check in db first - need to change key to spotifylink as it will just create another id
+
+            #TODO: using playlist/?? - go to imdb - and check its a movie - if not
+            movieResults = ia.search_movie(playlist)
+            print('movie match list',movieResults)
+            theMovieName = movieResults[0]
+            print('movie pivked =',theMovieName)
+            playlist=theMovieName.data['title']
+            #get image print somthing
+            if "cover url" in theMovieName.data:
+                print(theMovieName.data.get('cover url'))
+                poster=theMovieName.data.get('cover url')
+            else:
+                poster="NULL"
+            #           return redirect(url_for('dashboard'))
             spotifyPlaylistId = spotifyObject.user_playlist_create(userData['spotifyId'], playlist)  # getting the link for the sptify playlist
+            #spotifyObject.playlist_add_items(spotifyPlaylistId['id'], ['1ZPlNanZsJSPK5h9YZZFbZ'], position=None)  # it wants id as list
+            #todo - remove when fix recommended.html no empty list
+            spotifyObject.playlist_replace_items(spotifyPlaylistId['id'], ['1ZPlNanZsJSPK5h9YZZFbZ'])  # it wants id as list
+
             cur = mysql.connection.cursor()  # oprning sql connection
             # Check if playlist already exists
             if cur.execute("SELECT * FROM playlist WHERE userid= %s AND playlisttitle = %s", (session['id'], playlist)):
@@ -212,9 +242,11 @@ def create_playlist():
                 # TODO:  no displaying message AR
                 return render_template('add_playlist.html', msg=msg)  # open it in the add_playlist html page
 
-            cur.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink) VALUES (%s,%s,%s)",
+
+
+            cur.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink) VALUES (%s,%s,%s,%s)",
                         # adding the playlist to the db
-                        (session['id'], playlist, spotifyPlaylistId['id']))  # getting the id from the link
+                        (session['id'], playlist, spotifyPlaylistId['id'],poster))  # getting the id from the link
             mysql.connection.commit()  # comming connection to sql
             flash('success')  # success message
             msg = 'Added playlist ' + playlist
@@ -222,6 +254,9 @@ def create_playlist():
             flash("Failed create playlist into spotify", 'danger')  # fail message
             msg = 'Failed to add playlist ' + playlist
             pass
+        except Exception as e:  # if it doesnt connect
+            print(e)
+
         # result=cur.execute("SELECT * FROM users WHERE username= %s",[{{session.username}}])
 
         # TODO:  this is going to add_playlist instead of dashboard !!!
@@ -229,6 +264,7 @@ def create_playlist():
         # think this should be redirct so it goes straight to dashboard function and loads playlists from DB
         return redirect(url_for('dashboard'))
 
+    #Get just display input for name
     return render_template('add_playlist.html', form=form)  # open function in add_playlist.html
 
 def get_playlistId(playListName):
@@ -243,6 +279,7 @@ def delete_playlist(playlist):
     try:
         myCursor = mysql.connection.cursor()
         # works         result = myCursor.execute("SELECT spotifylink from playlist WHERE playlisttitle = 'playlist'")
+        #todo move this to session storing all lists and links - must make sure users have there own session first
         if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
                             (session['id'], playlistName)):
             playlistLinks = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
@@ -316,12 +353,41 @@ def getOfficialPlaylist(playlistName):
 
     return lst
 
+@app.route('/update_table', methods=['POST'])
+def update_table():
+  data = request.get_json()
+  table_data = data['table_data']
+  #table_data = json.loads(request.form['table_data'])
+  # Do something with the table data (e.g., store it in a database)
+  print('Table data received and processed successfully')
+  print( session['playListName'],table_data)
+  #TODO delete playlist from spotify and re-created it with tracks
+
+  myCursor = mysql.connection.cursor()
+  # works         result = myCursor.execute("SELECT spotifylink from playlist WHERE playlisttitle = 'playlist'")
+  # todo move this to session storing all lists and links - must make sure users have there own session first
+  try:
+    if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
+                      (session['id'], session['playListName'])): #check
+          playlistLinks = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
+          spotifyPlayListId = playlistLinks[0]['spotifyLink'] #the spotify Playlist id
+          spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+
+          spotifyObject.playlist_replace_items(spotifyPlayListId, table_data)  # it wants id as list
+
+  except Exception as e:
+      print(e)
+
+  return 'Table data received and processed successfully'
 
 #todo - need a save button for updated list - to go to spotify - need function like this savePlayList
 
 class make_recommended(Form): #Not working
     title = StringField('playlistTitle')
 
+#TODO issues:
+# Remove and Add do not update the session data - so load buttons will loose all the data and be replaced
+# by original??
 @app.route('/recomended' ,methods=['GET', 'POST'])#/<string:playlist>') # spell check
 @is_logged_in
 def recomended(): #(playlist):
@@ -334,50 +400,93 @@ def recomended(): #(playlist):
     form = make_playlist(request.form)  # make the playlist using the form element
     #if form.get
     # TODO dont know how to use class way - see add_playlist.html
-    playlistName = request.form.get("playlistTitle")
+    playListName = request.form.get("playlistTitle")
     action = request.form.get("load_button")
     #playlistName = request.form['playlistTitle'] #.title.data  # get the data entered in the form and use that as the name for the playlist
 
 
     # using the Name get the spoitify link - if it suceeds - delete from database
-    if playlistName != None:
-        if session.get("playListTracks") is None: # Only load from DB if not already loaded
+    if playListName != None:
+        session['playListName']=playListName
+        # if session.get("playListTracks") is None: # Only load from DB if not already loaded
+        if True:  #not sure he need to load every time??
             session["playListTracks"] = []
             try:
                 # TODO only get from db if  empty
                 myCursor = mysql.connection.cursor()
                 # works         result = myCursor.execute("SELECT spotifylink from playlist WHERE playlisttitle = 'playlist'")
                 if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
-                                    (session['id'], playlistName)):
+                                    (session['id'], playListName)):
                     playlistLink = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
                     spotifyLink = playlistLink[0]['spotifyLink']
                     spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
                     #tracks = spotfyObject.??getplaylistcontent??(spotifyId, spotifyLink)
                     # get songs in your playlist and send them to screen
                     lst = spotifyObject.playlist_items(spotifyLink)
-                    print('CONTENTS OF LIST: ', playlistName)
+                    print('CONTENTS OF LIST: ', playListName)
                     tracks=[]
                     for j in lst['items']:
                         tracks.append(j['track']['name'])
-                        session["playListTracks"].append(j['track']['name'])
+                        session["playListTracks"].append([j['track']['name'],j['track']['id']])
             except:
                 flash("Error getting Playlist tracks from Spotify", 'error')
                 return redirect(url_for('dashboard'))
 
     # TODO do we set back to 0 every time ??
+    # add/remove and then click official - even if you have saved - goes back to original list
+    # can add get from spotify each time - but it still won't get non-saved ??
     session["selectTracksFrom"] = []
     if action != None:
-        if action == "Recommended":
+        if action == "Recommended": #todo
             for j in lst['items']:
                 session["selectTracksFrom"].append(j['track']['name'])
-        if action == "Official Soundtrack": #TODO function to get from spotify usingplayListName
-            #lst = getOfficialPlaylist(playlistName) #TODO items
-            for j in session["playListTracks"]:
-                session["selectTracksFrom"].append(j) #j['track']['name'])
-        if action == "Search":
-            session["selectTracksFrom"].append("I am searching")  # j['track']['name'])
+        elif action == "Official Soundtrack": #TODO function to get from spotify usingplayListName
+            spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
 
-    return render_template('recomended.html')  # open this function in the rgisterpage
+            results = spotifyObject.search(session['playListName'] + ' soundtrack', 1, 0, type="album")
+            album_id = results['albums']['items'][0]['id'] #todo picking up first only - shhould we ask
+            lst = spotifyObject.album_tracks(album_id)
+            print(lst['items'][0]['name'])  # name of track
+            for j in lst['items']:
+                # only add to list if not already in not in playlist
+                if [j['name'],j['id']] not in session["playListTracks"]:
+                    print(j['name'])  ######yessssssss prints out all songs
+                    session["selectTracksFrom"].append([j['name'],j['id']])  ####put in a list
+
+        elif action == "Search":
+            track_name = request.form['song_name']
+            spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+            results = spotifyObject.search(track_name, 10, 0, "track")
+            songs_dict = results['tracks']
+            song_items = songs_dict['items']
+            song = song_items[0]['external_urls']['spotify']
+
+            lst=results['tracks']
+            for j in lst['items']:
+                # only add to list if not already in not in playlist
+                if [j['name'], j['id']] not in session["playListTracks"]:
+                    print(j['name'])  ######yessssssss prints out all songs
+                    session["selectTracksFrom"].append([j['name'], j['id']])  ####put in a list
+
+    return render_template('recomended.html')
+
+
+#
+# if request.method == 'POST':
+#     if 'load_button' in request.form:
+#         if request.form['load_button'] == 'Official Soundtrack':
+#             # Handle Official Soundtrack button click
+#             pass
+#         elif request.form['load_button'] == 'Reccomended':
+#             # Handle Reccomended button click
+#             pass
+#         elif request.form['load_button'] == 'Search':
+#             song_name = request.form['song_name']
+#             # Handle Search button click with song_name variable
+#             pass
+#     elif 'save_button' in request.form:
+#         # Handle SAVE tracks button click
+#         pass
 
 
 @app.route('/your-url')
@@ -393,4 +502,10 @@ if __name__ == '__main__':
     app.secret_key = 'secret123'
     app.run(debug=True) #set the application to run in debug mode to get better feedback about errors.
 
+
+#todo issues
+# if tracks list is empty issue in js cloning
+# save-tracks - have names not id's - bac to spotipy will it pick up correct songs??
+# seting playListName to false in dashboard
+#playlist name breaking on space in dashboard form
 
