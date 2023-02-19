@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block body %}
+<!-- TODO do I need rows in container ?? container-fluid make it width of screen not working - look at layout-->
+<div class="container">
+<div class="row g-4">
+	<h1>Welcome {{session.username}} </h1>
+		<table class="table table-fluid table-success table-striped table-bordered table-stripped table-hover align-middle text-centre">
+		<tbody>
+			{% for movie in movieList %}
+			<tr>
+
+				<td><img src="{{movie.data['cover url']}}" style="width:104px;height:142px;"></td>
+				<td>{{movie.data['title']}}</td>
+
+				<td><form id = "movieListSelect" action="/pickMovie" method="POST">
+					<input type="hidden" name="movie" value="{{movie.movieID}}">
+					<button formaction="/pickMovie" type="submit">Select Movie</button>
+
+				</form></td>
+			</tr>
+
+			{% endfor %}
+
+		</tbody>
+	</table>
+</div>
+</div>
+{% endblock %}

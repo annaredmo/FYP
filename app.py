@@ -16,6 +16,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
 import json
+from flask import jsonify
 from imdb import Cinemagoer
 
 
@@ -196,6 +197,45 @@ def dashboard():
         return render_template('userDashboard.html', msg=msg)   # view function is defined to handle requests to the home page
 
 
+#=====================================================================================
+#TODO - could change to store imdbID instead??
+def storeMovieInDB(movieId,movieList):
+    theMovieName=movieList[0]
+    poster=movieList[1]
+    print('movie name',movieId,theMovieName,poster)
+    try:
+        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+
+        spotifyPlaylistId = spotifyObject.user_playlist_create(userData['spotifyId'], theMovieName)  # getting the link for the sptify playlist
+
+        cur = mysql.connection.cursor()  # oprning sql connection
+        # Check if playlist already exists
+        if cur.execute("SELECT * FROM playlist WHERE userid= %s AND playlisttitle = %s", (session['id'], theMovieName)):
+            msg = 'Playlist already exists:' + theMovieName
+            # TODO:  send back to calling function do not render here
+            return render_template('add_playlist.html', msg=msg)  # open it in the add_playlist html page
+        print("before add",theMovieName)
+        print("DETAILS ", session['id'], theMovieName, spotifyPlaylistId['id'], poster)
+
+        cur.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink) VALUES (%s,%s,%s,%s)",
+                    (session['id'], theMovieName, spotifyPlaylistId['id'],poster))  # getting the id from the link
+        mysql.connection.commit()  # comming connection to sql
+        flash('success')  # success message
+        msg = 'Added playlist ' + theMovieName
+        print("after add",msg)
+
+    except spotipy.SpotifyException as e:  # if it doesnt connect
+        flash("Failed create playlist into spotify", 'danger')  # fail message
+        msg = 'Failed to add playlist ' + theMovieName
+        pass
+    except Exception as e:  # if it doesnt connect
+      print(e)
+
+    flash(f"Added playlist for Movie {theMovieName}", 'success')
+
+
+#=====================================================================================
+
 class make_playlist(Form):
     title = StringField('Name', [validators.Length(min=1, max=25)])
 
@@ -215,57 +255,55 @@ def create_playlist():
         print(userData['spotifyId'])
         user_name = spotifyObject.current_user()  # user name assignmenet
         try:
-            # TODO: spotify will add same name twice - need to check in db first - need to change key to spotifylink as it will just create another id
 
-            #TODO: using playlist/?? - go to imdb - and check its a movie - if not
-            movieResults = ia.search_movie(playlist)
-            print('movie match list',movieResults)
-            theMovieName = movieResults[0]
-            print('movie pivked =',theMovieName)
-            playlist=theMovieName.data['title']
-            #get image print somthing
-            if "cover url" in theMovieName.data:
-                print(theMovieName.data.get('cover url'))
-                poster=theMovieName.data.get('cover url')
-            else:
-                poster="NULL"
-            #           return redirect(url_for('dashboard'))
-            spotifyPlaylistId = spotifyObject.user_playlist_create(userData['spotifyId'], playlist)  # getting the link for the sptify playlist
-            #spotifyObject.playlist_add_items(spotifyPlaylistId['id'], ['1ZPlNanZsJSPK5h9YZZFbZ'], position=None)  # it wants id as list
-            #todo - remove when fix recommended.html no empty list
-            spotifyObject.playlist_replace_items(spotifyPlaylistId['id'], ['1ZPlNanZsJSPK5h9YZZFbZ'])  # it wants id as list
+            movieList = ia.search_movie(playlist)
+            print('movie match list',movieList)
+            # rerender this page to display table of movied with select button - see recomended.html
 
-            cur = mysql.connection.cursor()  # oprning sql connection
-            # Check if playlist already exists
-            if cur.execute("SELECT * FROM playlist WHERE userid= %s AND playlisttitle = %s", (session['id'], playlist)):
-                msg = 'Playlist already exists:' + playlist
-                # TODO:  no displaying message AR
-                return render_template('add_playlist.html', msg=msg)  # open it in the add_playlist html page
+            #todo - commenting out so you can add display table to pick from
+            #theMovieName = movieList[0]
+            #storeMovieInDB(movieList)
 
+            #render add_playlist - sending in movieResults
 
+            myMovieList={}
+            for movie in movieList:
+                print(movie.movieID,movie.data['title'], movie.data.get('cover url'))
+                if not movie.data.get('cover url'): #todo: check this
+                    print("no img ",movie)
+                    movie['cover url']='.\\static\\images\\banner.jpg'
+                #generate dict storing movie id, title and image - for access later - and access via id if needed
+                myMovieList[movie.movieID]=[movie.data['title'], movie.data.get('cover url')]
 
-            cur.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink) VALUES (%s,%s,%s,%s)",
-                        # adding the playlist to the db
-                        (session['id'], playlist, spotifyPlaylistId['id'],poster))  # getting the id from the link
-            mysql.connection.commit()  # comming connection to sql
-            flash('success')  # success message
-            msg = 'Added playlist ' + playlist
-        except spotipy.SpotifyException as e:  # if it doesnt connect
-            flash("Failed create playlist into spotify", 'danger')  # fail message
-            msg = 'Failed to add playlist ' + playlist
-            pass
+            session['currentMovieList']= myMovieList
+
+            return render_template('pickMovie.html', movieList=movieList)
+
         except Exception as e:  # if it doesnt connect
             print(e)
 
-        # result=cur.execute("SELECT * FROM users WHERE username= %s",[{{session.username}}])
-
-        # TODO:  this is going to add_playlist instead of dashboard !!!
-        #return render_template('userDashboard.html', msg=msg)  # go back to dashboard
-        # think this should be redirct so it goes straight to dashboard function and loads playlists from DB
-        return redirect(url_for('dashboard'))
-
     #Get just display input for name
     return render_template('add_playlist.html', form=form)  # open function in add_playlist.html
+
+@app.route('/pickMovie' ,methods=['GET', 'POST'])
+@is_logged_in
+def pickMovie(): #(playlist):
+    if request.method == 'GET' :  # if the request is POST
+        print("IN  GET")
+    movie = request.form.get("movie")
+
+    # using the Name get the spoitify link - if it suceeds - delete from database
+    if movie != None:
+        #print("MOVIE =",movie)
+        #need more error checking
+        movieDict=session.get('currentMovieList',None)
+        selectedMovie=movieDict.get(movie)
+        if selectedMovie != None:
+            storeMovieInDB(movie,selectedMovie)
+        else:
+            flash("Movie didn't exist", 'error')
+    return redirect(url_for('dashboard'))
+
 
 def get_playlistId(playListName):
     pass
@@ -380,6 +418,31 @@ def update_table():
 
   return 'Table data received and processed successfully'
 
+
+@app.route('/get_song_data',methods=['GET', 'POST'])
+def get_song_data():
+    # Your code to fetch the list of songs goes here
+    #
+    data = request.get_json()
+    table_data = data['table_data']
+    print(session['playListName'], table_data)
+
+
+    spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+    trackList=[]
+    results = spotifyObject.search(session['playListName'] + ' soundtrack', 1, 0, type="album")
+    album_id = results['albums']['items'][0]['id']  # todo picking up first only - shhould we ask
+    lst = spotifyObject.album_tracks(album_id)
+    print(lst['items'][0]['name'])  # name of track
+    for j in lst['items']:
+        # only add to list if not already in not in playlist
+        # todo first time only in session after that in
+        if j['id'] not in table_data:
+            print(j['name'])  ######yessssssss prints out all songs
+            trackList.append([j['name'], j['id']])  #list of lists
+    ## TODO FIX ??
+    return jsonify(trackList)
+
 #todo - need a save button for updated list - to go to spotify - need function like this savePlayList
 
 class make_recommended(Form): #Not working
@@ -392,20 +455,10 @@ class make_recommended(Form): #Not working
 @is_logged_in
 def recomended(): #(playlist):
     if request.method == 'GET' :  # if the request is POST
-        print("IN RECOMMENDED GET")
-    # goto spotify and get tracks for playlistId
-    # return render_template('recommender.html', tracks=tracks)  # sends in the playlist we just got from database
-
-    ls={}
-    form = make_playlist(request.form)  # make the playlist using the form element
-    #if form.get
-    # TODO dont know how to use class way - see add_playlist.html
+        pass
     playListName = request.form.get("playlistTitle")
     action = request.form.get("load_button")
     #playlistName = request.form['playlistTitle'] #.title.data  # get the data entered in the form and use that as the name for the playlist
-
-
-    # using the Name get the spoitify link - if it suceeds - delete from database
     if playListName != None:
         session['playListName']=playListName
         # if session.get("playListTracks") is None: # Only load from DB if not already loaded
@@ -438,20 +491,21 @@ def recomended(): #(playlist):
     session["selectTracksFrom"] = []
     if action != None:
         if action == "Recommended": #todo
-            for j in lst['items']:
-                session["selectTracksFrom"].append(j['track']['name'])
-        elif action == "Official Soundtrack": #TODO function to get from spotify usingplayListName
-            spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-
-            results = spotifyObject.search(session['playListName'] + ' soundtrack', 1, 0, type="album")
-            album_id = results['albums']['items'][0]['id'] #todo picking up first only - shhould we ask
-            lst = spotifyObject.album_tracks(album_id)
-            print(lst['items'][0]['name'])  # name of track
-            for j in lst['items']:
-                # only add to list if not already in not in playlist
-                if [j['name'],j['id']] not in session["playListTracks"]:
-                    print(j['name'])  ######yessssssss prints out all songs
-                    session["selectTracksFrom"].append([j['name'],j['id']])  ####put in a list
+            pass
+            # for j in lst['items']:
+            #     session["selectTracksFrom"].append(j['track']['name'])
+        # elif action == "Official Soundtrack": #TODO function to get from spotify usingplayListName
+        #     spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+        #
+        #     results = spotifyObject.search(session['playListName'] + ' soundtrack', 1, 0, type="album")
+        #     album_id = results['albums']['items'][0]['id'] #todo picking up first only - shhould we ask
+        #     lst = spotifyObject.album_tracks(album_id)
+        #     print(lst['items'][0]['name'])  # name of track
+        #     for j in lst['items']:
+        #         # only add to list if not already in not in playlist
+        #         if [j['name'],j['id']] not in session["playListTracks"]:
+        #             print(j['name'])  ######yessssssss prints out all songs
+        #             session["selectTracksFrom"].append([j['name'],j['id']])  # list of lists
 
         elif action == "Search":
             track_name = request.form['song_name']

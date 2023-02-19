@@ -17,7 +17,7 @@
 				<td><a href="delete_playlist/{{playlist.playlisttitle}}" ><button class="btn btn-hover">Delete</button></a></td>
 				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
 					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">
-					<input type="hidden" name="button_name" value="Official Soundtrack">
+					<!--input type="hidden" name="button_name" value="Official Soundtrack" -->
 					<button formaction="/recomended" type="submit">Add Tracks</button>
 				</form></td>
 			{% endfor %}

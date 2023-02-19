@@ -8,7 +8,9 @@
 <form method="POST" class="form-register">
   <div class="form-group row">
     <div class="col-sm-6">
-      <input type="submit" name="load_button" value="Official Soundtrack" class="btn btn-primary">
+        <button type="button" class="btn btn-primary" onclick="loadData()">Official Soundtrack</button>
+
+      <!--input type="submit" name="load_button" value="Official Soundtrack" class="btn btn-primary"-->
     </div>
     <div class="col-sm-6">
       <div class="input-group">
@@ -24,7 +26,7 @@
       <input type="submit" name="load_button" value="Reccomended" class="btn btn-primary">
     </div>
     <div class="col-sm-6">
-      <button type="button" id="save-button" onclick="save_tracks()" class="btn btn-danger pull-right">SAVE tracks</button>
+      <button type="button" id="save-button" onclick="saveTracks()" class="btn btn-danger pull-right">SAVE tracks</button>
     </div>
   </div>
 </form>
@@ -86,10 +88,11 @@
         </table>
     </div>
   </div>
+
 <script>
 function removeTrack(pressedRow) {
     /* This method will delete a row */
-        console.log("removeTrack: ",pressedRow.parentNode.parentNode);
+    console.log("removeTrack: ",pressedRow.parentNode.parentNode);
 
     pressedRow.parentNode.parentNode.remove();
     }
@@ -101,7 +104,7 @@ function transferTrack(pressedRow) {
       const clickedRow = pressedRow.parentNode.parentNode;
       const clickedCell = clickedRow.querySelector('td:first-child');
 
-      // Create a new row with an exact copy of the first cell of the clicked row
+      // New row with a copy of the first cell of the clicked row
       const playlistTable = document.getElementById('playListTable');
       const playlistTBody = playlistTable.tBodies[0];
       const newRow = playlistTBody.insertRow(1);
@@ -110,7 +113,7 @@ function transferTrack(pressedRow) {
       newCell.setAttribute('data-song-id', clickedCell.getAttribute('data-song-id'));
       newCell.textContent = clickedCell.textContent;
 
-      // Add a Remove button to the new row
+      // new row add a remove button
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'btn btn-danger';
@@ -122,19 +125,14 @@ function transferTrack(pressedRow) {
       const removeCell = newRow.insertCell(1);
       removeCell.classList.add('move-cell');
       removeCell.appendChild(removeButton);
-
       pressedRow.parentNode.parentNode.remove();
-
       console.log("table = ",playlistTable);
-
 }
-
-
  </script>
 
 <script>
-    function save_tracks(){
-        // Get the table data
+    function get_playlist_ids()
+    {
         var tableData=[];
         var table = document.querySelector('#playListTable');
         var rows = table.querySelectorAll('tr');
@@ -149,20 +147,73 @@ function transferTrack(pressedRow) {
                 }
             }
         }
-        console.log('Save tracks',tableData);
+        console.log('tracks',tableData);
+        return tableData;
+    }
+</script>
 
-        // Send the data to the server using an XMLHttpRequest
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/update_table', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            console.log('Table data was successfully sent to the server');
-          }
-        };
-        xhr.send(JSON.stringify({table_data: tableData}));
-    alert("Successfully saved to Play List");
+<script>
+    //Get Official Playlist get_official_album
+function loadData() {
+  // Get the ids from the playlist so there is no repeat
+  const tableData = get_playlist_ids();
+  console.log('loadData',tableData);
+
+  fetch('/get_song_data', {
+    method: 'POST',
+    body: JSON.stringify({table_data: tableData}),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    const tbody = document.getElementById("tbodyrec");
+    tbody.innerHTML = "<tr><th>Official Soundtrack</th></tr>";
+    for (var i = 0; i < data.length; i++) {
+      var row = tbody.insertRow();
+      var cell1 = row.insertCell(0);
+      var cell2 = row.insertCell(1);
+      cell1.innerHTML = data[i][0];
+      //need to use
+      cell2.innerHTML = '<button type="button" class="btn btn-danger my-add-button" onclick="transferTrack(this)">Add</button>';
+      cell1.setAttribute("class", "btn btn-default");
+      cell1.setAttribute("data-song-id", data[i][1]);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
 }
+
+</script>
+<script>
+async function saveTracks() {
+  const tableData = get_playlist_ids();
+  console.log('Save tracks', tableData);
+
+  const response = await fetch('/update_table', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({table_data: tableData})
+  });
+
+  if (response.ok) {
+    console.log('Table data was successfully sent to the server');
+    alert('Successfully saved to Play List');
+  } else {
+    console.error('Network response was not ok');
+  }
+}
+
+
 </script>
 </div>
 
