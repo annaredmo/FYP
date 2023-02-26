@@ -1,10 +1,12 @@
 {% extends 'layout.html' %}
 {% block body %}
+
 <!-- TODO do I need rows in container ?? container-fluid make it width of screen not working - look at layout-->
 <div class="container">
 <div class="row g-4">
 	<h1>Welcome {{session.username}} </h1>
-	<a href="/create_playlist" class="btn btn-success" role="button">Create A New Playlist</a>
+
+	<a href="/create_playlist"  class="btn long-btn-custom" role="button">Create A New Playlist</a>
 
 	<table class="table table-fluid table-success table-striped table-bordered table-stripped table-hover align-middle text-centre">
 		<tbody>
@@ -13,7 +15,7 @@
 			<tr>
 				<td><img src="{{playlist.imgLink}}" style="width:104px;height:142px;"><a  href="play_playlist/{{playlist.id}}"  class="btn btn-default">{{playlist.playlisttitle}}</a></td>
 				<!-- TODO causes security error need python method to deal with this - open in new tap etc -->
-				<td><a href="https://open.spotify.com/playlist/{{playlist.spotifylink}}"><button class="btn btn-outline-success">Play</button></a></td>
+				<td><a href="https://open.spotify.com/playlist/{{playlist.spotifylink}}"><button class="btn">Play</button></a></td>
 				<td><a href="delete_playlist/{{playlist.playlisttitle}}" ><button class="btn btn-hover">Delete</button></a></td>
 				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
 					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">

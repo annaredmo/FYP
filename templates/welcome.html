@@ -1,22 +1,33 @@
+
 {% extends 'layout.html' %}
 {% block body %}
-<style>
-body {
-   margin: 0;
-}
-#index-jumbotron {
-<!--    background-image: url(static/images/banner.jpg);-->
-    background-size: cover;
-    padding-bottom: 46.128%; /* <- This value should be equal to height / width */
-}
-</style>
+
+<body>
+	<div class="banner">
+<img class="banner-image" src="static/images/blockbusterBanner.jpeg" alt="Banner Image">
+	</div>
+
 <div class="jumbotran text-center">
-	<h1>Welcome to Annas FANTASY movie soundtrack maker app</h1>
-	<p class="lead"> Create your ideal soundtrack for any movie.</p>
-	{% if session.logged_in==NULL %}
-	<a href="/register" class="btn btn-primary btn-lg">REGISTER</a>
-	<a href="/login" class="btn btn-primary btn-lg">LOGIN</a>
-	{% endif %}
+	<h1 class="lead">Popular with Friends</h1>
 </div>
-<div id="index-jumbotron"></div>
+
+  <div class="container">
+    <div class="row">
+      {% for movie in playlists %}
+      <div class="col-sm-4 mb-4">
+        <div class="thumbnail">
+          <form action="/playlist" method="POST">
+            <input type="hidden" name="spotifylink" value="{{ movie.spotifylink }}">
+            <button type="submit"><img src="{{ movie.imgLink }}" alt="{{ movie.title }}"></button>
+            <--! need to make alt text smaller - make it re??-->
+          </form>
+
+          <div class="caption">
+            <h5>{{ movie.playlisttitle }}</h5>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 {% endblock %}

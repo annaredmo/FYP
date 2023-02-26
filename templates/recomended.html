@@ -8,16 +8,14 @@
 <form method="POST" class="form-register">
   <div class="form-group row">
     <div class="col-sm-6">
-        <button type="button" class="btn btn-primary" onclick="loadData()">Official Soundtrack</button>
-
-      <!--input type="submit" name="load_button" value="Official Soundtrack" class="btn btn-primary"-->
+        <button type="button" class="btn btn-primary" onclick="officialSoundtrack()">Official Soundtrack</button>
     </div>
     <div class="col-sm-6">
       <div class="input-group">
-        <input type="text" id="song-name" name="song_name" class="form-control" maxlength="30">
-        <div class="input-group-append">
-          <button type="submit" name="load_button" value="Search" class="btn btn-primary">Search</button>
-        </div>
+          <input type="text" id="song-name" name="song_name" class="form-control" maxlength="30">
+          <div class="input-group-append">
+            <button type="button" name="load_button" value="Search" class="btn btn-primary" onclick="searchTracks()">Search</button>
+          </div>
       </div>
     </div>
   </div>
@@ -32,38 +30,15 @@
 </form>
 
 
-
-
-        <!--form method="POST" class="form-register">
-
-            <input type="submit" name="load_button" value="Official Soundtrack">
-            <input type="submit" name="load_button" value="Search">
-            <input type="submit" name="load_button" value="Reccomended">
-            <button type="button" id="save-button" onclick="save_tracks()"  class="btn btn-danger pull-right ">SAVE tracks</button>
-
-        </form -->
-
-
 <div class="container mt-5">
-
   <div class="row">
-
     <div class="col-sm-4">
-
 		<table class="table  table-hover" id="recommendedTable">
             <tbody id="tbodyrec">
 			<tr>
-				<th>Official Soundtrack</th>
+				<th>Songs for you ... </th>
 			</tr>
-			{% for song in session["selectTracksFrom"] %}
-                <tr>
-                  <td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
-                  <td class="move-cell">
-                    <button type="button" class="btn btn-danger" onclick="transferTrack(this)">Add</button>
-                  </td>
 
-			</tr>
-			{% endfor %}
             </tbody>
         </table>
     </div>
@@ -73,32 +48,27 @@
 			<tr>
 				<th>Track in </th>
 			</tr>
-			{% for song in session["playListTracks"] %}
+			{% for song in playListTracks %}
 			<tr>
                 <tr>
-  <td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
-  <td class="move-cell">
-    <button type="button" class="btn btn-danger" onclick="removeTrack(this)">Remove</button>
-  </td>
-
-
-			</tr>
+				<td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
+				<td class="move-cell"><button type="button" class="btn btn-danger" onclick="removeTrack(this)">Remove</button></td>
+				</tr>
 			{% endfor %}
-                        </tbody>
+		</tbody>
         </table>
     </div>
   </div>
+
 
 <script>
 function removeTrack(pressedRow) {
     /* This method will delete a row */
     console.log("removeTrack: ",pressedRow.parentNode.parentNode);
-
     pressedRow.parentNode.parentNode.remove();
     }
 </script>
 <script>
-// works but only if 1 row exists
 function transferTrack(pressedRow) {
       // Get the clicked row and its first data cell
       const clickedRow = pressedRow.parentNode.parentNode;
@@ -154,12 +124,15 @@ function transferTrack(pressedRow) {
 
 <script>
     //Get Official Playlist get_official_album
-function loadData() {
+function officialSoundtrack() {
   // Get the ids from the playlist so there is no repeat
   const tableData = get_playlist_ids();
-  console.log('loadData',tableData);
+  console.log('officialSoundtrack',tableData);
 
-  fetch('/get_song_data', {
+  fetchAndHandleResponse('/getSongData', {table_data: tableData });
+
+/*
+  fetch('/getSongData', {
     method: 'POST',
     body: JSON.stringify({table_data: tableData}),
     headers: {
@@ -180,7 +153,49 @@ function loadData() {
       var cell1 = row.insertCell(0);
       var cell2 = row.insertCell(1);
       cell1.innerHTML = data[i][0];
-      //need to use
+      cell2.innerHTML = '<button type="button" class="btn btn-danger my-add-button" onclick="transferTrack(this)">Add</button>';
+      cell1.setAttribute("class", "btn btn-default");
+      cell1.setAttribute("data-song-id", data[i][1]);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+*/
+}
+</script>
+<script>
+function searchTracks() {
+  const tableData = get_playlist_ids();
+  const songName = document.getElementById("song-name").value;
+  console.log(songName);
+
+  fetchAndHandleResponse('/searchForMatchingTracks', { song_name: songName, table_data: tableData });
+}
+
+function fetchAndHandleResponse(url, data) {
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    const tbody = document.getElementById("tbodyrec");
+    tbody.innerHTML = "<tr><th>Official Soundtrack</th></tr>";
+    for (var i = 0; i < data.length; i++) {
+      var row = tbody.insertRow();
+      var cell1 = row.insertCell(0);
+      var cell2 = row.insertCell(1);
+      cell1.innerHTML = data[i][0];
+
       cell2.innerHTML = '<button type="button" class="btn btn-danger my-add-button" onclick="transferTrack(this)">Add</button>';
       cell1.setAttribute("class", "btn btn-default");
       cell1.setAttribute("data-song-id", data[i][1]);
@@ -190,7 +205,6 @@ function loadData() {
     console.error('Error:', error);
   });
 }
-
 </script>
 <script>
 async function saveTracks() {
@@ -207,17 +221,14 @@ async function saveTracks() {
 
   if (response.ok) {
     console.log('Table data was successfully sent to the server');
-    alert('Successfully saved to Play List');
+    alert('Successfully saved to Play List',tableData);
   } else {
     console.error('Network response was not ok');
   }
 }
 
-
 </script>
 </div>
-
 </body>
-
 
 {% endblock %}

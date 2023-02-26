@@ -1,0 +1,60 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-8">
+      <h1>{{ playlist.playlisttitle }}</h1>
+      <p>{{ playlist.description }}</p>
+    </div>
+    <div class="col-md-4">
+      <img src="{{ playlist.imgLink }}" alt="{{ playlist.title }}" class="img-thumbnail">
+      <div class="like-button" onclick="incrementLikes()">
+        <i class="bi bi-heart"></i>
+        <span id="like-count" class="like-count">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dropdown" data-bs-theme="light">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonLight" data-bs-toggle="dropdown" aria-expanded="false">
+    Default dropdown
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonLight">
+    <li><a class="dropdown-item active" href="#">Action</a></li>
+    <li><a class="dropdown-item" href="#">Action</a></li>
+    <li><a class="dropdown-item" href="#">Another action</a></li>
+    <li><a class="dropdown-item" href="#">Something else here</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="#">Separated link</a></li>
+  </ul>
+</div>
+
+<div class="dropdown" data-bs-theme="dark">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonDark" data-bs-toggle="dropdown" aria-expanded="false">
+    Dark dropdown
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonDark">
+    <li><a class="dropdown-item active" href="#">Action</a></li>
+    <li><a class="dropdown-item" href="#">Action</a></li>
+    <li><a class="dropdown-item" href="#">Another action</a></li>
+    <li><a class="dropdown-item" href="#">Something else here</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="#">Separated link</a></li>
+  </ul>
+</div>
+
+{% endblock %}
+
+
+<script>
+  /* Likes !!! */
+  function incrementLikes() {
+    var countEl = document.getElementById('like-count');
+    var count = parseInt(countEl.innerHTML);
+    countEl.innerHTML = count + 1;
+    /* need to send like back to database */
+  }
+</script>

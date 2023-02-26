@@ -1,5 +1,12 @@
+  <style>
+    /* This CSS has to be here as it's not inheriting from layout.html - so no access to custom.css */
 
-<nav class="navbar navbar-expand-sm bg-success justify-content-center">
+    nav {background-color: #ffff00;}
+    .my-navbar .navbar-nav .nav-link {
+      color: red;
+    }
+  </style>
+<nav class="navbar navbar-expand-sm  justify-content-center my-navbar">
   <!-- me-auto start from end = left ?? -->
   <ul class="navbar-nav me-auto mb-2 mb-lg-0">
     <li class="nav-item">
@@ -38,3 +45,4 @@
     {% endif %}
   </ul>
 </nav>
+

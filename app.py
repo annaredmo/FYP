@@ -15,17 +15,22 @@ from requests.exceptions import ConnectionError
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+
 import json
 from flask import jsonify
 from imdb import Cinemagoer
+import imdb
+import pickle
+import logging
 
 
-ia = Cinemagoer()
-
+ia = imdb.IMDb()
 
 spotifyObjectG = 0
 spotifyIdG = 0
 userData={}
+
+#logging.basicConfig(filename='app.log', level=logging.ERROR)
 
 app = Flask(__name__)
 
@@ -37,31 +42,49 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
+clientID = '6c68091ecfa44fe9b55ff6bcc5d81c97'
+clientSecret = '36582bf60f224dc3a1035a0335700bef'
+redirectURI = 'https://google.com/'
 
 
 # TODO: ISSUE if I dont put global here it crashes ???? even though i am only checking it - dont understand
 def spotipyConnection():
     global spotifyObjectG, spotifyIdG # it sees I assign it further down so need global!!
-
-    if spotifyObjectG != 0:  # alreadt connected may have to re-connect here
-        return spotifyObjectG, spotifyIdG
     try:
+        if 'spotifyId' in session:  # already connected may have to re-connect here
+            # spotipyId seems to be in session when I restart the server ?? Maybe another sesion
+            #this will stay in memory for 31 days !!!
+            print('spotipyConnection: In spotifyid in session')
 
-        clientID = '6c68091ecfa44fe9b55ff6bcc5d81c97'
-        clientSecret = '36582bf60f224dc3a1035a0335700bef'
-        redirectURI = 'https://google.com/'
-        oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI)
-        token_dict = oauth_object.get_access_token()  # can cause an error if there but has an issue # looks in cache file for token - if none goes to spotify
-        token = token_dict['access_token']
+            serialized_oath_object = session['spotifyOathObject']
+            oauth_object = pickle.loads(serialized_oath_object)
 
-        spotifyObjectG = spotipy.Spotify(auth=token)
-        me=spotifyObjectG.me()['id'] #gives info about current user
+            # Check if the access token has expired
+            if oauth_object.is_token_expired(oauth_object.get_cached_token()):
+                print('spotipyConnection: Access token has expired')
 
-        spotifyIdG = spotifyObjectG.me()['id']
-        userData['spotifyObject'] = spotifyObjectG
-        userData['spotifyId'] = spotifyIdG
+                new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token())
+                oauth_object.access_token = new_token['access_token']
+                session['spotifyOathObject'] = pickle.dumps(oauth_object)
 
-        return spotifyObjectG, spotifyIdG
+            spotifyObjectG = spotipy.Spotify(auth_manager=oauth_object)
+            spotifyIdG = spotifyObjectG.me()['id']
+
+            return spotifyObjectG, spotifyIdG
+
+        else:
+            #first log in for this server session
+            print('spotipyConnection: logon the session')
+
+            oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI)
+            #token_dict = oauth_object.get_access_token()  ## looks in cache file for token - if none goes to spotify
+            #token = token_dict['access_token']
+            spotifyObjectG = spotipy.Spotify(auth_manager=oauth_object)
+            spotifyIdG = spotifyObjectG.me()['id']
+            session['spotifyOathObject'] = pickle.dumps(oauth_object)
+            session['spotifyId'] = spotifyIdG
+
+            return spotifyObjectG, spotifyIdG
     except spotipy.SpotifyException as e:
         flash("Failed to log into spotify", 'danger')
         return False
@@ -79,18 +102,19 @@ def spotipyConnection():
         print("ERROR internat?? ",e)
         return 0,0
 
+def getSpotifyObject():
 
+
+    sp,spId=spotipyConnection()
+
+    return sp
+    #
 
 @app.errorhandler(Exception)
 def basic_error(e):
     print("An error occured:" + str(e))
     # render an error page
     return redirect(url_for('dashboard'))
-
-# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
-@app.route('/')
-def welcome():
-    return render_template('welcome.html')
 
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=50)])
@@ -115,8 +139,8 @@ def login():
             password = data['password']  ## TODO: needed ??  getting the password from the data
             # TODO passwords are not being compared and letting any password to log in
             if password_candidate == password:  # todo taking out encryption - but good for security	#sha256_crypt.verify(password_candidate,password):
-                spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
-                if (spotifyId):  # if there is a spotify id to be found
+                #spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
+                if (spotipyConnection()):  # if there is a spotify id to be found
                     session['logged_in'] = True  # session is now logged in
                     session['username'] = username  # session username is username inputted
                     session['id'] = data['id']  # session id is the id from the db
@@ -160,7 +184,7 @@ def delete_user():
     try:
         myCursor = mysql.connection.cursor()
 
-        myCursor.execute("delete  FROM friends WHERE spotifyId =%s", (spotifyIdG,))    #deleting from db
+        myCursor.execute("delete  FROM friends WHERE spotifyId =%s", (session['spotifyId'],))    #deleting from db
         mysql.connection.commit()
         myCursor.close()    #close db connection
         clearUser() #clear session and everything else
@@ -199,14 +223,18 @@ def dashboard():
 
 #=====================================================================================
 #TODO - could change to store imdbID instead??
-def storeMovieInDB(movieId,movieList):
-    theMovieName=movieList[0]
-    poster=movieList[1]
+def storeMovieInDB(movieId,theMovieName,poster):
+
     print('movie name',movieId,theMovieName,poster)
     try:
-        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+        #spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
 
-        spotifyPlaylistId = spotifyObject.user_playlist_create(userData['spotifyId'], theMovieName)  # getting the link for the sptify playlist
+        #todo check if it exists first??
+        sp=getSpotifyObject()
+        print('sp=',sp)
+        print('g=',spotifyObjectG)
+        print('is=',session['spotifyId'])
+        spotifyPlaylistId = getSpotifyObject().user_playlist_create(session['spotifyId'], theMovieName)  # getting the link for the sptify playlist
 
         cur = mysql.connection.cursor()  # oprning sql connection
         # Check if playlist already exists
@@ -214,8 +242,8 @@ def storeMovieInDB(movieId,movieList):
             msg = 'Playlist already exists:' + theMovieName
             # TODO:  send back to calling function do not render here
             return render_template('add_playlist.html', msg=msg)  # open it in the add_playlist html page
-        print("before add",theMovieName)
-        print("DETAILS ", session['id'], theMovieName, spotifyPlaylistId['id'], poster)
+        print("before add",movieId,theMovieName,poster)
+        #print("DETAILS ", session['id'], theMovieName, spotifyPlaylistId['id'], poster)
 
         cur.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink) VALUES (%s,%s,%s,%s)",
                     (session['id'], theMovieName, spotifyPlaylistId['id'],poster))  # getting the id from the link
@@ -225,11 +253,13 @@ def storeMovieInDB(movieId,movieList):
         print("after add",msg)
 
     except spotipy.SpotifyException as e:  # if it doesnt connect
-        flash("Failed create playlist into spotify", 'danger')  # fail message
-        msg = 'Failed to add playlist ' + theMovieName
-        pass
+        msg = 'Failed to add playlist ' + theMovieName + "LOGOUT/LOGIN AGAIN "
+        print("Error storeMovieInDB: ", e, '.')
+        flash(msg, 'danger')
+        return redirect(url_for('dashboard'))
     except Exception as e:  # if it doesnt connect
-      print(e)
+        flash("Failed create playlist into spotify", 'danger')  # fail message
+        print(e)
 
     flash(f"Added playlist for Movie {theMovieName}", 'success')
 
@@ -249,11 +279,10 @@ def create_playlist():
     form = make_playlist(request.form)  # make the playlist using the form element
     if request.method == 'POST' and form.validate():  # if the request is POST
         playlist = form.title.data  # get the data entered in the form and use that as the name for the playlist
-
+        tracks=[]
         # TODO can't get this from global?? So just reconnecting SH
-        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-        print(userData['spotifyId'])
-        user_name = spotifyObject.current_user()  # user name assignmenet
+        #spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+        #user_name = spotifyObject.current_user()  # user name assignmenet
         try:
 
             movieList = ia.search_movie(playlist)
@@ -266,42 +295,45 @@ def create_playlist():
 
             #render add_playlist - sending in movieResults
 
-            myMovieList={}
+            myMovieList=[]
             for movie in movieList:
-                print(movie.movieID,movie.data['title'], movie.data.get('cover url'))
-                if not movie.data.get('cover url'): #todo: check this
+                print(movie.movieID,movie.data['title'], )
+
+                if not movie.data.get('full-size cover url'):
                     print("no img ",movie)
-                    movie['cover url']='.\\static\\images\\banner.jpg'
-                #generate dict storing movie id, title and image - for access later - and access via id if needed
-                myMovieList[movie.movieID]=[movie.data['title'], movie.data.get('cover url')]
+                    movie['full-size cover url']='.\\static\\images\\banner.jpg'
+                    #generate dict storing movie id, title and image - for access later - and access via id if needed
+                myMovieList.append([movie.movieID,movie.data['title'], movie.get('full-size cover url')])
 
-            session['currentMovieList']= myMovieList
-
-            return render_template('pickMovie.html', movieList=movieList)
+            return render_template('pickMovie.html', movieList=myMovieList)
 
         except Exception as e:  # if it doesnt connect
             print(e)
 
     #Get just display input for name
     return render_template('add_playlist.html', form=form)  # open function in add_playlist.html
-
+import ast
 @app.route('/pickMovie' ,methods=['GET', 'POST'])
 @is_logged_in
 def pickMovie(): #(playlist):
     if request.method == 'GET' :  # if the request is POST
         print("IN  GET")
-    movie = request.form.get("movie")
+    #movie = request.form.get("movie")
+    movie_json = request.form['movie']
+    print('json',movie_json)  # print the JSON string for debugging
 
-    # using the Name get the spoitify link - if it suceeds - delete from database
+    print('str=',ast.literal_eval(movie_json))
+    movie = ast.literal_eval(movie_json)
+    print(movie[0])
+
+
+    print("MOVIE =", movie)
+
     if movie != None:
-        #print("MOVIE =",movie)
-        #need more error checking
-        movieDict=session.get('currentMovieList',None)
-        selectedMovie=movieDict.get(movie)
-        if selectedMovie != None:
-            storeMovieInDB(movie,selectedMovie)
-        else:
-            flash("Movie didn't exist", 'error')
+        print("MOVIE =",movie)
+        storeMovieInDB( movieId=movie[0],theMovieName=movie[1],poster=movie[2])
+    else:
+            flash("No movie picked", 'error')
     return redirect(url_for('dashboard'))
 
 
@@ -324,19 +356,23 @@ def delete_playlist(playlist):
             spotifyLink = playlistLinks[0]['spotifyLink']
             msg = "Found"
             # delete from spotify
-            spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
-            spotfyObject.user_playlist_unfollow(spotifyId, spotifyLink)
+            #spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
             myCursor.execute("delete  FROM playlist WHERE spotifylink =%s", (spotifyLink,))
             mysql.connection.commit()
+            myCursor.close()
+
+            getSpotifyObject().user_playlist_unfollow(session['spotifyId'], spotifyLink)
         else:
             msg = "NO PLAYLIST FOUND "
 
-        myCursor.close()
         flash("Playlist successfully deleted", 'success')
-    except:
-        flash("Playlist didnt get deleted", 'error')
-        pass
-    # message??
+    except spotipy.SpotifyException as e:
+
+        if e.http_status == 403 and "Insufficient scope" in e.msg:
+            flash("Playlist didnt exist on Spoipy" + str(e), 'error')
+        else:
+            flash("Spotipy error:" + str(e), 'error')
+
     return redirect(url_for('dashboard'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -362,11 +398,11 @@ def register():
 
         # check this is a valid spoitify account
 
-        spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
+        #spotfyObject, spotifyId = spotipyConnection()  # spotify object assignment
 
-        if (spotifyId): #if there is a spotify id to be found
+        if (spotipyConnection()): #if there is a spotify id to be found
             cur.execute("INSERT INTO friends(name,email,username,password,spotifyId) VALUES(%s,%s,%s,%s,%s)",
-                    (name, email, name, password,spotifyId)) #insert these persons details into the db
+                    (name, email, name, password,session['spotifyId'])) #insert these persons details into the db
             mysql.connection.commit()
             cur.close() #commit and close cursor
             flash('Successfully verified', 'success')
@@ -409,9 +445,9 @@ def update_table():
                       (session['id'], session['playListName'])): #check
           playlistLinks = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
           spotifyPlayListId = playlistLinks[0]['spotifyLink'] #the spotify Playlist id
-          spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+          #spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
 
-          spotifyObject.playlist_replace_items(spotifyPlayListId, table_data)  # it wants id as list
+          getSpotifyObject().playlist_replace_items(spotifyPlayListId, table_data)  # it wants id as list
 
   except Exception as e:
       print(e)
@@ -419,20 +455,42 @@ def update_table():
   return 'Table data received and processed successfully'
 
 
-@app.route('/get_song_data',methods=['GET', 'POST'])
-def get_song_data():
-    # Your code to fetch the list of songs goes here
+@app.route('/searchForMatchingTracks', methods=['POST'])
+def searchForMatchingTracks():
+    searchName = request.json.get('song_name')
+    table_data = request.json.get('table_data')
+
+    #spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+    results = getSpotifyObject().search(searchName, 10, 0, "track")
+    songs_dict = results['tracks']
+    song_items = songs_dict['items']
+    song = song_items[0]['external_urls']['spotify']
+
+    lst = results['tracks']
+    trackList=[]
+
+    for j in lst['items']:
+        # only add to list if not already in not in playlist
+        if j['id'] not in table_data:
+            print(j['name'])
+            trackList.append([j['name'], j['id']])  #list of lists
+    return jsonify(trackList)
+
+
+@app.route('/getSongData',methods=['GET', 'POST'])
+def getSongData():
+
     #
     data = request.get_json()
     table_data = data['table_data']
     print(session['playListName'], table_data)
 
 
-    spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+    #spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
     trackList=[]
-    results = spotifyObject.search(session['playListName'] + ' soundtrack', 1, 0, type="album")
+    results = getSpotifyObject().search(session['playListName'] + ' soundtrack', 1, 0, type="album")
     album_id = results['albums']['items'][0]['id']  # todo picking up first only - shhould we ask
-    lst = spotifyObject.album_tracks(album_id)
+    lst = getSpotifyObject().album_tracks(album_id)
     print(lst['items'][0]['name'])  # name of track
     for j in lst['items']:
         # only add to list if not already in not in playlist
@@ -458,7 +516,8 @@ def recomended(): #(playlist):
         pass
     playListName = request.form.get("playlistTitle")
     action = request.form.get("load_button")
-    #playlistName = request.form['playlistTitle'] #.title.data  # get the data entered in the form and use that as the name for the playlist
+    tracks = []
+
     if playListName != None:
         session['playListName']=playListName
         # if session.get("playListTracks") is None: # Only load from DB if not already loaded
@@ -476,19 +535,20 @@ def recomended(): #(playlist):
                     #tracks = spotfyObject.??getplaylistcontent??(spotifyId, spotifyLink)
                     # get songs in your playlist and send them to screen
                     lst = spotifyObject.playlist_items(spotifyLink)
-                    print('CONTENTS OF LIST: ', playListName)
-                    tracks=[]
+                    #lst = getSpotifyObject().playlist_items(spotifyLink)
+
                     for j in lst['items']:
-                        tracks.append(j['track']['name'])
-                        session["playListTracks"].append([j['track']['name'],j['track']['id']])
-            except:
-                flash("Error getting Playlist tracks from Spotify", 'error')
+                        tracks.append([j['track']['name'],j['track']['id']])
+                        #session["playListTracks"].append([j['track']['name'],j['track']['id']])
+            except Exception as e:
+                print("Error recomended: ", e,'.')
+                flash("Error getting Playlist tracks from SpotifyT LOGOTU/LOGIN AGAIN ", 'error')
                 return redirect(url_for('dashboard'))
 
     # TODO do we set back to 0 every time ??
     # add/remove and then click official - even if you have saved - goes back to original list
     # can add get from spotify each time - but it still won't get non-saved ??
-    session["selectTracksFrom"] = []
+    #session["selectTracksFrom"] = []
     if action != None:
         if action == "Recommended": #todo
             pass
@@ -508,21 +568,11 @@ def recomended(): #(playlist):
         #             session["selectTracksFrom"].append([j['name'],j['id']])  # list of lists
 
         elif action == "Search":
-            track_name = request.form['song_name']
-            spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-            results = spotifyObject.search(track_name, 10, 0, "track")
-            songs_dict = results['tracks']
-            song_items = songs_dict['items']
-            song = song_items[0]['external_urls']['spotify']
+            pass
 
-            lst=results['tracks']
-            for j in lst['items']:
-                # only add to list if not already in not in playlist
-                if [j['name'], j['id']] not in session["playListTracks"]:
-                    print(j['name'])  ######yessssssss prints out all songs
-                    session["selectTracksFrom"].append([j['name'], j['id']])  ####put in a list
+    print('CONTENTS OF LIST: ', playListName,tracks)
 
-    return render_template('recomended.html')
+    return render_template('recomended.html',playListTracks=tracks )
 
 
 #
@@ -552,6 +602,51 @@ def your_url():
     # return render_template('your_url.html', code=request.args['code']) USED THE WRONG NAME FOR YOUR-URL
 
 
+
+#======================================================================================================
+
+@app.route("/playlist", methods=["POST"])
+@is_logged_in
+def playlist():
+    spotifylink = request.form.get("spotifylink")
+
+    myCursor = mysql.connection.cursor()
+    result = myCursor.execute("SELECT userid, playlisttitle,imgLink from playlist WHERE spotifylink = %s", (spotifylink,))
+    if result > 0:
+
+        playList = myCursor.fetchone()  #
+        myCursor.close()
+        return render_template("playlist.html", playlist=playList)
+    else:
+        myCursor.close()
+        flash("Playlist doesn't exist", 'danger')
+        return render_template("welcome.html")
+
+
+
+
+# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
+@app.route('/') # 2 ways to get in - via click on button OR from login straight
+@is_logged_in  # @ signifys a a decerator which is a function that extends another function
+def welcome():
+    myCursor = mysql.connection.cursor()
+    # TODO: change playlist to use spotifylink as key
+
+    result = myCursor.execute("SELECT userid, playlisttitle,imgLink,spotifylink from playlist WHERE userid != %s", [session['id']]) # TODO: move to spotify id (provider?)
+
+    #playlists = myCursor.fetchall()
+    friendsPlaylist=myCursor.fetchall()
+
+    myCursor.close()
+    if result > 0:
+        # or can just access from session in dashboard
+        return render_template('welcome.html', playlists=friendsPlaylist)  # sends in the playlist we just got from database
+    else:
+        return render_template('welcome.html', [])   # view function is defined to handle requests to the home page
+
+#======================================================================================================
+
+
 if __name__ == '__main__':
     app.secret_key = 'secret123'
     app.run(debug=True) #set the application to run in debug mode to get better feedback about errors.
@@ -563,3 +658,4 @@ if __name__ == '__main__':
 # seting playListName to false in dashboard
 #playlist name breaking on space in dashboard form
 
+#HTTP Error for GET to https://api.spotify.com/v1/playlists/512hrsI8L7e1QlphhNq7On/tracks with Params: {'limit': 100, 'offset': 0, 'fields': None, 'market': None, 'additional_types': 'track,episode'} returned 401 due to The access token expired

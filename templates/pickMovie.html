@@ -9,18 +9,18 @@
 			{% for movie in movieList %}
 			<tr>
 
-				<td><img src="{{movie.data['cover url']}}" style="width:104px;height:142px;"></td>
-				<td>{{movie.data['title']}}</td>
+				<td><img src="{{movie[2]}}" style="width:104px;height:142px;"></td>
+				<td>{{movie[1]}}</td>
 
 				<td><form id = "movieListSelect" action="/pickMovie" method="POST">
-					<input type="hidden" name="movie" value="{{movie.movieID}}">
+					<input type="hidden" name="movie" value="{{ movie }}">
 					<button formaction="/pickMovie" type="submit">Select Movie</button>
 
 				</form></td>
 			</tr>
+							<!--p>Debug: {{ movie }}</p-->
 
 			{% endfor %}
-
 		</tbody>
 	</table>
 </div>
