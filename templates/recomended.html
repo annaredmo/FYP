@@ -1,16 +1,12 @@
 {% extends 'layout.html' %}
 {% block body %}
-<h1>Add Reccomended songs to your playlist from the official soundtrack</h1>
-<h1> For {{session['playListName']}}</h1>
+<div class="container mt-3">
+    <h1> For {{session['playListName']}}</h1>
+</div>
 
-<body>
+<form method="POST">
 
-<form method="POST" class="form-register">
-  <div class="form-group row">
-    <div class="col-sm-6">
-        <button type="button" class="btn btn-primary" onclick="officialSoundtrack()">Official Soundtrack</button>
-    </div>
-    <div class="col-sm-6">
+    <div class="container mt-3">
       <div class="input-group">
           <input type="text" id="song-name" name="song_name" class="form-control" maxlength="30">
           <div class="input-group-append">
@@ -18,40 +14,39 @@
           </div>
       </div>
     </div>
-  </div>
-  <div class="form-group row">
-    <div class="col-sm-6">
-      <input type="submit" name="load_button" value="Reccomended" class="btn btn-primary">
+
+
+    <div class="container mt-3">
+    <div class="row">
+        <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-primary" onclick="officialSoundtrack()">Official Soundtrack</button></div>
+        <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-danger" onclick="saveTracks()">Save you tracks</button></div>
+        <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-primary" onclick="">Recommended</button></div>
     </div>
-    <div class="col-sm-6">
-      <button type="button" id="save-button" onclick="saveTracks()" class="btn btn-danger pull-right">SAVE tracks</button>
-    </div>
-  </div>
+   </div>
+
 </form>
 
-
-<div class="container mt-5">
+<div class="container  mt-5">
   <div class="row">
-    <div class="col-sm-4">
-		<table class="table  table-hover" id="recommendedTable">
+    <div class="col-6 ">
+		<table class="table  table-thick-border table-hover table-bordered" id="recommendedTable">
             <tbody id="tbodyrec">
 			<tr>
-				<th>Songs for you ... </th>
+				<th class="table-border-none">Songs for you ... </th>
 			</tr>
-
             </tbody>
         </table>
     </div>
-    <div class="col-sm-4">
-        <table class="table  table-hover border" id="playListTable" >
+    <div class="col-6">
+        <table class="table  table-thick-border table-hover table-bordered" id="playListTable" >
             <tbody id="tbodylist">
 			<tr>
 				<th>Track in </th>
 			</tr>
 			{% for song in playListTracks %}
 			<tr>
-                <tr>
-				<td class="btn btn-default" data-song-id="{{song[1]}}">{{song[0]}}</td>
+                <tr> <!-- to change color of text use --bs-btn-color -->
+				<td class="btn rec-table-button" data-song-id="{{song[1]}}">{{song[0]}}</td>
 				<td class="move-cell"><button type="button" class="btn btn-danger" onclick="removeTrack(this)">Remove</button></td>
 				</tr>
 			{% endfor %}
@@ -147,13 +142,13 @@ function officialSoundtrack() {
   })
   .then(data => {
     const tbody = document.getElementById("tbodyrec");
-    tbody.innerHTML = "<tr><th>Official Soundtrack</th></tr>";
+    tbody.innerHTML = "<tr><th class="table-border-none">Official Soundtrack</th></tr>";
     for (var i = 0; i < data.length; i++) {
       var row = tbody.insertRow();
       var cell1 = row.insertCell(0);
       var cell2 = row.insertCell(1);
       cell1.innerHTML = data[i][0];
-      cell2.innerHTML = '<button type="button" class="btn btn-danger my-add-button" onclick="transferTrack(this)">Add</button>';
+      cell2.innerHTML = '<button type="button" class="btn rec-table-button my-add-button" onclick="transferTrack(this)">Add</button>';
       cell1.setAttribute("class", "btn btn-default");
       cell1.setAttribute("data-song-id", data[i][1]);
     }
@@ -189,15 +184,15 @@ function fetchAndHandleResponse(url, data) {
   })
   .then(data => {
     const tbody = document.getElementById("tbodyrec");
-    tbody.innerHTML = "<tr><th>Official Soundtrack</th></tr>";
+    tbody.innerHTML = '<tr><th class="table-border-none">Songs for you ...</th></tr>';
     for (var i = 0; i < data.length; i++) {
       var row = tbody.insertRow();
       var cell1 = row.insertCell(0);
       var cell2 = row.insertCell(1);
       cell1.innerHTML = data[i][0];
 
-      cell2.innerHTML = '<button type="button" class="btn btn-danger my-add-button" onclick="transferTrack(this)">Add</button>';
-      cell1.setAttribute("class", "btn btn-default");
+      cell2.innerHTML = '<button type="button" class="btn btn-danger" onclick="transferTrack(this)">Add</button>';
+      cell1.setAttribute("class", "btn rec-table-button");
       cell1.setAttribute("data-song-id", data[i][1]);
     }
   })
@@ -229,6 +224,5 @@ async function saveTracks() {
 
 </script>
 </div>
-</body>
 
 {% endblock %}

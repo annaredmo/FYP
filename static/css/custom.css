@@ -6,6 +6,7 @@
 :root {
   --blockbuster-yellow: #ffff1a; /* define the variable */
   --blockbuster-blue: #001a4d;
+
 }
 
 html {
@@ -14,20 +15,152 @@ html {
       -ms-text-size-adjust: 100%;
 
 }
-
+/*F
  body {
   margin: 0;
   background-image: url('background.png');
   background-repeat: no-repeat;
   background-size: cover;
   color: var(--blockbuster-yellow);
+} */
+/* recommended page */
+/* TABLE todo !!! borders missing
+#rec-recommendedTable {
+   width: 80%;
+}
+*/
+
+a.nav-link  {
+      color: #ffff1a;
+      font-size: 1.25rem;
+
+    }
+.table-thick-border{
+    border: 5px solid;
+    color: var(--blockbuster-yellow);
+
+}
+.row.rec-table-tr{
+
+}
+/* N.B. color of the table text !!! */
+.rec-table-button{
+    color: var(--blockbuster-yellow);
+    text-align: left;
+    font-size: small;
 }
 
-/* TABLE todo !!! borders missing*/
+.table-button{
+    color: var(--blockbuster-yellow);
+    text-align: left;
+
+}
+/* makes the line between cells dissapear */
+
+th {
+    border-style: none;
+}
+
+/* style for tables no internal borders N.B. */
+
+tbody, td, tfoot, thead, tr {
+    border-style: none;
+        color: var(--blockbuster-yellow);
+        font-size: large;
+
+}
+/* not working */
+    th {
+        border-bottom: 10px!important;
+    border-color: var(--blockbuster-yellow);
+
+    }
+
+/*
+
+
+.rec-table-button{
+    color: var(--blockbuster-yellow);
+}
+
+table.rec-table-no-border {
+  border-collapse: collapse;
+}
+
+table.rec-table-no-border td, table.rec-table-no-border th {
+  border: none;-style
+}
+
+
+.table-border-none {
+  border: none;
+}*/
+
+/*
+.boarder {
+    border: 5px solid;
+    color: var(--blockbuster-yellow);
+}
+*/
+    .surround-table-red {
+      border: 5px solid #f00;
+        border-collapse: separate;
+            max-height: 100%;
+
+
+    }
+    .surround-table-blue {
+      border: 5px solid blue;
+        border-collapse: separate;
+            max-height: 250px;
+
+
+    }
+
+.playlist-scr-table{
+
+    border: 5px solid;
+    color: var(--blockbuster-yellow);
+    max-height: 50%;
+    overflow: hidden; overflow-y: auto; -ms-overflow-style: none ;
+    --webkit-scrollbar: none;
+
+}
+.bottom-margin{
+    margin-bottom: 10%;
+}
+#tbodylist {
+   width: 100%;
+   height: 100%
+}
+table {
+    color: var(--blockbuster-yellow);
+
+  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+      -ms-overflow-style: none; /* takes away screen scrollbar not table */
+
+}
+td {
+    color: var(--blockbuster-yellow);
+}
+tbody::-webkit-scrollbar{
+    display: none;
+        width: 0 !important
+
+  }
+
+
+/*
 table, th, td {
   border: 1px solid;
   border-color: var(--blockbuster-yellow);
 }
+*/
+
+
+/*
 table, th{
   color: var(--blockbuster-yellow);
 }
@@ -39,6 +172,7 @@ tr{
   background-color: rgba(0, 0, 26 0.6);
 }
 
+*/
 /*
 #login{
   background-image: url('peep.png');
@@ -47,7 +181,9 @@ tr{
 #form-box {
     box-sizing: border-box;
     margin: 2rem 0;
-    background: #FFAFB8;
+    background: black;
+      opacity: .75;
+
     padding: 2rem;
     border-radius: 10px;
 } /* login */
@@ -70,6 +206,7 @@ section > .container {
 h1 {
     padding-top: 0em;
     color: var(--blockbuster-yellow);
+    font-size: 3rem;
 }
 p{
     color: var(--blockbuster-yellow);
@@ -83,6 +220,10 @@ h2 {
 
 h3.example{
 	color: blue;
+}
+
+h5{
+	font-size: 1.1em;
 }
 
 
@@ -109,8 +250,9 @@ h3.example{
 .thumbnail {
   position: relative;
   overflow: hidden;
-  padding-bottom: 67.5%;
+  padding-bottom: 100%;
 }
+
 .thumbnail img {
   position: absolute;
   top: 0;
@@ -120,21 +262,35 @@ h3.example{
   height: 100%;
   width: 100%;
   object-fit: cover;
+  object-position: center top;
+
 }
+
+.btn-lg{
+
+width: 100%;
+
+}
+
 .thumbnail .caption {
+font-size: 0.75rem;
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   color: #fff;
-  padding: 0.5rem;
+  padding: 0.25rem;
 
 }
 
+.col-6{
+width:50%}
+
+
 
 /* PLaylist Page */
-.container {
+.container-playlist {
 padding: 20px;
 display: flex;
 flex-direction: column;
@@ -142,10 +298,10 @@ align-items: center;
 justify-content: center;
 }
 
-.img-thumbnail {
-width: 300px;
-height: 300px;
-object-fit: cover;
+.playlist-img {
+width: 80%;  /* 90% didth of its container it will calculate the height*/
+/*height: 700px;*/
+/*object-fit: cover;*/
 }
 
 .like-button {
@@ -155,12 +311,122 @@ justify-content: center;
 color: #dc3545;
 font-size: 2.0rem;
 cursor: pointer;
-margin-top: 20px;
+margin-top: 10%;
 }
 
 .like-count {
 display: flex;
 align-items: center;
-font-size: 1.5rem;
+font-size: 1rem;
 margin-left: 10px;
 }
+
+.comment-button{
+
+display: flex;
+align-items: center;
+justify-content: center;
+color: #dc3545;
+font-size: 2.0rem;
+cursor: pointer;
+margin-top: 250px;
+
+}
+
+/* font for username on welcome page */
+.username-font {
+  font-family: 'Comfortaa', sans-serif;
+}
+
+
+/*=========Comment Modal================*/
+/* Style the comment button */
+.comment-btn {
+  margin: 10px;
+}
+
+/* Style the modal dialog */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Style the modal content */
+.modal-content {
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  background-color: #fff;
+}
+
+/* Style the modal title */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-weight: bold;
+}
+
+.close {
+  font-size: 30px;
+  font-weight: bold;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Style the modal body */
+.modal-body {
+  margin-bottom: 20px;
+}
+
+/* Style the comment textarea */
+textarea {
+ width: 100%;
+  height: 100%;
+}
+
+/*==================Comment box============*/
+.allCommentBox{
+    background-color: orange;
+     width: 300px;
+  height: 400px;
+
+}
+.commentBox{
+      background-image: url("paper.gif");
+  background-color: #cccccc;
+}
+/*==================Fonts==================*/
+
+.Lucinda {
+  font-family: "Lucida Console", "Courier New", monospace;
+}
+
+.handwritten {
+    font-family: Great Vibes;
+    font-size: x-large;
+}
+.kalam {
+    font-family: Kalam;
+    font-size: x-large; /* Use instead of px for responsivness */
+}
+
+

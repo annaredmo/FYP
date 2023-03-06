@@ -2,6 +2,17 @@
 {% extends 'layout.html' %}
 {% block body %}
 
+<style>
+  .playlist-title {
+  font-family: Arial, sans-serif;
+}
+
+.caption h5 {
+  font-family: "Comic Sans MS", sans-serif;
+}
+
+</style>
+
 <body>
 	<div class="banner">
 <img class="banner-image" src="static/images/blockbusterBanner.jpg" alt="Banner Image">
@@ -11,20 +22,22 @@
 	<h1 class="lead">Popular with Friends</h1>
 </div>
 
+
+
   <div class="container">
     <div class="row">
       {% for movie in playlists %}
-      <div class="col-sm-4 mb-4">
+      <div class="col-sm-2 mb-2">
         <div class="thumbnail">
           <form action="/playlist" method="POST">
             <input type="hidden" name="spotifylink" value="{{ movie.spotifylink }}">
-            <button type="submit"><img src="{{ movie.imgLink }}" alt="{{ movie.title }}"></button>
-            <--! need to make alt text smaller - make it re??-->
-          </form>
 
-          <div class="caption">
-            <h5>{{ movie.playlisttitle }}</h5>
-          </div>
+            <button type="submit"><img src="{{ movie.imgLink }}" alt="{{ movie.title }}"></button>
+          </form>
+<div class="caption">
+<h5 class="playlist-title">{{ movie.playlisttitle }} by <span class="username-font">{{ movie.username }}</span></h5>
+</div>
+
         </div>
       </div>
       {% endfor %}

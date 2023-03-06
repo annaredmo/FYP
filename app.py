@@ -1,24 +1,16 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
-from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import webbrowser
 from errorList import errorlist
 
 import os
-from bs4 import BeautifulSoup
 import requests
 from requests.exceptions import ConnectionError
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-
-
-import json
 from flask import jsonify
-from imdb import Cinemagoer
 import imdb
 import pickle
 import logging
@@ -28,7 +20,6 @@ ia = imdb.IMDb()
 
 spotifyObjectG = 0
 spotifyIdG = 0
-userData={}
 
 #logging.basicConfig(filename='app.log', level=logging.ERROR)
 
@@ -109,11 +100,25 @@ def getSpotifyObject():
 
     return sp
     #
-
+# Only handle errors in function if nor returning to dashboard
 @app.errorhandler(Exception)
 def basic_error(e):
     print("An error occured:" + str(e))
     # render an error page
+
+    # render an error page
+    # handle all exceptions
+    if isinstance(e, requests.exceptions.ConnectionError):
+        # handle connection errors
+        msg = "Internet is down: "
+    # elif isinstance(e, MySQLdb._mysql_exceptions.Error):
+    # handle database errors
+    # msg="Database error: "
+    else:
+        # handle all other exceptions
+        msg = "Error: "
+
+    flash(msg + str(e), 'danger')  # TODO take str(e) out when finished testing
     return redirect(url_for('dashboard'))
 
 class RegisterForm(Form):
@@ -153,8 +158,9 @@ def login():
                     return render_template('login.html', error=error)  # keep them on the login page
             else:
                 error = errorlist[0]  # wrong password message
+                cur.close()  # close connection
+
             return render_template('login.html', error=error)  # keep them on the login page
-            cur.close()  # close connection
         else:
             error = errorlist[0]
             return render_template('login.html', error=error)  # if its GET not POST return an error TODO: not true
@@ -199,7 +205,6 @@ def delete_user():
 @app.route('/logout')
 def logout():
     clearUser()
-    flash('you are now logged out')
     return redirect(url_for('login'))
 
 
@@ -421,6 +426,10 @@ def register():
 def contact():
     return render_template('contact.html')
 
+@app.route('/movie')
+def movie():
+    return render_template('movie.html')
+
 def getOfficialPlaylist(playlistName):
     lst=[]
     spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
@@ -531,15 +540,13 @@ def recomended(): #(playlist):
                                     (session['id'], playListName)):
                     playlistLink = myCursor.fetchall()  # TODO: in debug access spotipy link - need it to unfollow
                     spotifyLink = playlistLink[0]['spotifyLink']
+
                     spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-                    #tracks = spotfyObject.??getplaylistcontent??(spotifyId, spotifyLink)
                     # get songs in your playlist and send them to screen
                     lst = spotifyObject.playlist_items(spotifyLink)
-                    #lst = getSpotifyObject().playlist_items(spotifyLink)
-
                     for j in lst['items']:
                         tracks.append([j['track']['name'],j['track']['id']])
-                        #session["playListTracks"].append([j['track']['name'],j['track']['id']])
+
             except Exception as e:
                 print("Error recomended: ", e,'.')
                 flash("Error getting Playlist tracks from SpotifyT LOGOTU/LOGIN AGAIN ", 'error')
@@ -605,18 +612,100 @@ def your_url():
 
 #======================================================================================================
 
+@app.route('/update_likes', methods=['POST'])
+def update_likes():
+  data = request.get_json()
+  table_data = data['table_data']
+  likes=table_data.get('likes')
+  spotifyLink=table_data.get('spotifyLink')
+
+  print('supdate_likes: ',likes,spotifyLink,table_data)
+  if likes and spotifyLink:
+        myCursor = mysql.connection.cursor()
+        try:
+            myCursor.execute("UPDATE playlist SET likes = %s WHERE spotifyLink = %s", (likes, spotifyLink))
+            mysql.connection.commit()
+
+        except Exception as e:
+            print(e)
+
+        myCursor.close()
+
+  return 'Table data received and processed successfully'
+
+
+@app.route('/update_comments', methods=['POST'])
+def update_comments():
+  data = request.get_json()
+  table_data = data['table_data']
+  comment=table_data.get('comment')
+  spotifyLink=table_data.get('spotifyLink')
+  username=table_data.get('username')
+
+
+  print('update_comments: ',comment,spotifyLink,username)
+  if comment and spotifyLink:
+        myCursor = mysql.connection.cursor()
+        try:
+            myCursor.execute("INSERT INTO comments(comment,username,spotifyLink) VALUES(%s,%s,%s)",
+                        (comment,username, spotifyLink))
+
+            mysql.connection.commit()
+
+        except Exception as e:
+            print(e)
+
+        myCursor.close()
+
+  return 'Table data received and processed successfully'
+
+def dbGetUserName(userId):
+    myCursor = mysql.connection.cursor()
+    result = myCursor.execute(
+        "SELECT username from friends WHERE id = %s", (userId,))
+    data = myCursor.fetchone()  #
+    myCursor.close()
+
+    name = data.get('username')
+    return name
+
+
+
 @app.route("/playlist", methods=["POST"])
 @is_logged_in
 def playlist():
     spotifylink = request.form.get("spotifylink")
 
     myCursor = mysql.connection.cursor()
-    result = myCursor.execute("SELECT userid, playlisttitle,imgLink from playlist WHERE spotifylink = %s", (spotifylink,))
+    result = myCursor.execute("SELECT userid, playlisttitle,imgLink,likes,spotifylink from playlist WHERE spotifylink = %s", (spotifylink,))
+
     if result > 0:
 
         playList = myCursor.fetchone()  #
         myCursor.close()
-        return render_template("playlist.html", playlist=playList)
+        username=dbGetUserName(playList['userid'])
+        playList['username']=username
+        tracks=[]
+
+        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+        # get songs in your playlist and send them to screen
+        lst = spotifyObject.playlist_items(spotifylink)
+        for j in lst['items']:
+            tracks.append([j['track']['name'], j['track']['id']])
+        playList['tracks']=tracks
+
+        myCursor = mysql.connection.cursor()
+        result = myCursor.execute(
+            "SELECT comment,username from comments WHERE spotifylink = %s",(spotifylink,))
+        comments = myCursor.fetchall()  #
+
+        commentlist=[]
+        for j in comments:
+            commentlist.append([j['comment'],j['username']])
+        playList['comments']=commentlist
+
+
+        return render_template("playlist.html", playList=playList)
     else:
         myCursor.close()
         flash("Playlist doesn't exist", 'danger')
@@ -637,7 +726,14 @@ def welcome():
     #playlists = myCursor.fetchall()
     friendsPlaylist=myCursor.fetchall()
 
+    #TODO Get username from friends table - shold I store username in playlist instead - is this unique??
+    #TODO change id to userid??
+    for friends in friendsPlaylist:
+        result2 = myCursor.execute("SELECT username from friends WHERE id = %s", (friends.get('userid'),)) #TODO: move to spotify id (provider?)
+        username=myCursor.fetchone().get('username')
+        friends['username']=username
     myCursor.close()
+
     if result > 0:
         # or can just access from session in dashboard
         return render_template('welcome.html', playlists=friendsPlaylist)  # sends in the playlist we just got from database
@@ -645,12 +741,11 @@ def welcome():
         return render_template('welcome.html', [])   # view function is defined to handle requests to the home page
 
 #======================================================================================================
-
+#todo print statements still log in production mode - need log file?
 
 if __name__ == '__main__':
     app.secret_key = 'secret123'
     app.run(debug=True) #set the application to run in debug mode to get better feedback about errors.
-
 
 #todo issues
 # if tracks list is empty issue in js cloning

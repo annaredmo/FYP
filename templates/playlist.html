@@ -1,60 +1,172 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>
 
 <div class="container">
   <div class="row">
-    <div class="col-md-8">
-      <h1>{{ playlist.playlisttitle }}</h1>
-      <p>{{ playlist.description }}</p>
+    <div class="col-md-12">
+        <h1  class="kalam display-3">{{ playList.playlisttitle }} by {{ playList.username }} </h1>
+        <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
+        <input type="hidden" id="username-playlist" value="{{  playList.username }}">
+
+      <p>{{ playList.description }}</p>
     </div>
-    <div class="col-md-4">
-      <img src="{{ playlist.imgLink }}" alt="{{ playlist.title }}" class="img-thumbnail">
-      <div class="like-button" onclick="incrementLikes()">
-        <i class="bi bi-heart"></i>
-        <span id="like-count" class="like-count">0</span>
-      </div>
+  </div>
+
+  <div class="row">
+    <div class="col-5">
+    <!--div class="col-md-4"-->
+        <img src="{{ playList.imgLink }}" class="playlist-img">
+    </div>
+        <div class="col-1">
+        <div class="like-button" onclick="incrementLikes()">
+            <i class="bi bi-heart"></i>
+            <span id="like-count" class="like-count">{{ playList.likes }}</span>
+        </div>
+
+        <div class="comment-button" onclick="showCommentModal()">
+            <i class="bi bi-chat-left-text"></i>
+            <span id="create-comment"></span>
+        </div>
+        </div>
+
+        <div class="col-6 surround-table-red">
+
+              <div class="playlist-scr-table bottom-margin">
+                <table class="table table-hover " >
+                <tbody id="tbodylist">
+			    {% for song in playList['tracks'] %}
+                    <tr><td class="btn rec-table-button" data-song-id="{{song[1]}}">{{song[0]}}</td></tr>
+			    {% endfor %}
+		        </tbody>
+                </table>
+              </div>
+
+            <div class="playlist-scr-table bottom-margin">
+                <table class="table  table-hover" >
+                <tbody id="commentlist">
+                {% for comment in playList['comments'] %}
+                <tr><td>{{comment[0]}} by <span class="Lucinda">{{comment[1]}}</span></td></tr>
+    			{% endfor %}
+	        	</tbody>
+                </table>
+            </div>
+        </div>
+  </div>
+
+ <!-- button class="btn btn-danger comment-btn" onclick="showCommentModal()">
+  <i class="bi bi-chat-left-text"></i>
+</button -->
+   </div>
+  </div>
+<!-- Modal -->
+<div id="comment-modal" class="modal">
+  <div class="modal-content allCommentBox">
+    <div class="modal-header">
+      <h5 class="modal-title ">What ye think ???</h5>
+      <span class="close" onclick="hideCommentModal()">&times;</span>
+    </div>
+    <div class="modal-body commentBox">
+      <textarea class="commentBox kalam" id="comment-textarea" placeholder="Type your comment here"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="hideCommentModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="submitComment()">Thanks</button>
     </div>
   </div>
 </div>
 
-<div class="dropdown" data-bs-theme="light">
-  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonLight" data-bs-toggle="dropdown" aria-expanded="false">
-    Default dropdown
-  </button>
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonLight">
-    <li><a class="dropdown-item active" href="#">Action</a></li>
-    <li><a class="dropdown-item" href="#">Action</a></li>
-    <li><a class="dropdown-item" href="#">Another action</a></li>
-    <li><a class="dropdown-item" href="#">Something else here</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="#">Separated link</a></li>
-  </ul>
-</div>
 
-<div class="dropdown" data-bs-theme="dark">
-  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButtonDark" data-bs-toggle="dropdown" aria-expanded="false">
-    Dark dropdown
-  </button>
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonDark">
-    <li><a class="dropdown-item active" href="#">Action</a></li>
-    <li><a class="dropdown-item" href="#">Action</a></li>
-    <li><a class="dropdown-item" href="#">Another action</a></li>
-    <li><a class="dropdown-item" href="#">Something else here</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="#">Separated link</a></li>
-  </ul>
-</div>
+
+<script>
+// Get the modal dialog box and the comment textarea
+var commentModal = document.getElementById("comment-modal");
+var commentTextarea = document.getElementById("comment-textarea");
+
+function showCommentModal() {
+  commentModal.style.display = "block";
+}
+
+ function hideCommentModal() {
+  commentModal.style.display = "none";
+  commentTextarea.value = "";
+
+}
+
+// Submit the comment
+async function submitComment() {
+  // Get the comment text from the textarea
+  var comment = commentTextarea.value;
+  // Do something with the comment, e.g. send it to the server using AJAX
+  console.log("Comment submitted:", comment);
+  // Hide the modal dialog box
+  hideCommentModal();
+
+
+  id = document.getElementById("playlist-id-playlist").value;
+    username = document.getElementById("username-playlist").value;
+
+   const data = {
+      comment: comment,
+      spotifyLink: id,
+      username:username
+   };
+   console.log(data, id);
+
+    const response = await fetch('/update_comments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({table_data: data})
+  });
+  if (response.ok) {
+    console.log('Table data was successfully sent to the server');
+    var tableBody = document.getElementById("commentlist");
+    var newRow = document.createElement("tr");
+    var newCell = document.createElement("td");
+    newCell.textContent = comment+" by "+username; /* TODO doesnt have font */
+    newRow.appendChild(newCell);
+    tableBody.appendChild(newRow);
+
+  } else {
+    console.error('Network response was not ok');
+  }
+}
+
+  async function incrementLikes() {
+    var countEl = document.getElementById('like-count');
+    var count = parseInt(countEl.innerHTML);
+    countEl.innerHTML = count + 1;
+
+    var spotifyLink = document.getElementById("playlist-id-playlist").value;
+    const data = {
+      likes: count+1,
+      spotifyLink: spotifyLink
+    };
+
+    console.log('spotify',data)
+
+    const response = await fetch('/update_likes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({table_data: data})
+  });
+  if (response.ok) {
+    console.log('Table data was successfully sent to the server');
+  } else {
+    console.error('Network response was not ok');
+  }
+  }
+</script>
 
 {% endblock %}
 
 
-<script>
-  /* Likes !!! */
-  function incrementLikes() {
-    var countEl = document.getElementById('like-count');
-    var count = parseInt(countEl.innerHTML);
-    countEl.innerHTML = count + 1;
-    /* need to send like back to database */
-  }
-</script>
+
