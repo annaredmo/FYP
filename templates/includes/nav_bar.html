@@ -11,8 +11,12 @@
 
     }
   </style>
-<nav class="navbar navbar-expand-sm  justify-content-center my-navbar">
-  <!-- me-auto start from end = left ?? -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="collapsibleNavbar">
   <ul class="navbar-nav me-auto mb-2 mb-lg-0">
     <li class="nav-item">
       <a class="nav-link" href="/">Popular</a>
@@ -30,6 +34,8 @@
       <a class="nav-link" href="/delete">Delete Account</a>
     </li>
   </ul>
+    </div>
+  </div>
 
   <ul class="navbar-nav navbar-expand-sm ms-auto mb-2 mb-lg-0">
     {% if session.logged_in %}
@@ -48,6 +54,6 @@
           <a class="nav-link" href="/login">Login</a>
         </li>
     {% endif %}
-  <ul>
+  </ul>
 </nav>
 

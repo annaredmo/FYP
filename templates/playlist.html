@@ -1,44 +1,47 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-    <link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>
+<style>
+
+
+</style>
 
 <div class="container">
-  <div class="row">
-    <div class="col-md-12">
-        <h1  class="kalam display-3">{{ playList.playlisttitle }} by {{ playList.username }} </h1>
-        <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
-        <input type="hidden" id="username-playlist" value="{{  playList.username }}">
-
-      <p>{{ playList.description }}</p>
+  <div class="row align-items-center">
+    <div class="col-sm-6">
+      <h1 class="kalam display-3">{{ playList.playlisttitle }} by {{ playList.username }}</h1>
+    </div>
+    <div class="col-sm-3 d-flex justify-content-center">
+      <div class="like-button btn-danger icon-button" onclick="incrementLikes()">
+        <i class="bi bi-heart"></i>
+        <span id="like-count" class="like-count">{{ playList.likes }}</span>
+      </div>
+    </div>
+    <div class="col-sm-3 d-flex justify-content-center">
+      <div class="comment-button btn-danger icon-button" onclick="showCommentModal()">
+        <i class="bi bi-chat-left-text"></i>
+        <span id="create-comment"></span>
+      </div>
     </div>
   </div>
+  <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
+  <input type="hidden" id="username-playlist" value="{{ playList.username }}">
 
-  <div class="row">
+
+
+    <div class="container-playlist-2">
+
+  <div class="row  grow w-100">
     <div class="col-5">
-    <!--div class="col-md-4"-->
         <img src="{{ playList.imgLink }}" class="playlist-img">
-    </div>
-        <div class="col-1">
-        <div class="like-button" onclick="incrementLikes()">
-            <i class="bi bi-heart"></i>
-            <span id="like-count" class="like-count">{{ playList.likes }}</span>
-        </div>
 
-        <div class="comment-button" onclick="showCommentModal()">
-            <i class="bi bi-chat-left-text"></i>
-            <span id="create-comment"></span>
-        </div>
-        </div>
+            </div>
 
-        <div class="col-6 surround-table-red">
+        <div class="col-7">
 
               <div class="playlist-scr-table bottom-margin">
                 <table class="table table-hover " >
-                <tbody id="tbodylist">
+                <tbody>
 			    {% for song in playList['tracks'] %}
                     <tr><td class="btn rec-table-button" data-song-id="{{song[1]}}">{{song[0]}}</td></tr>
 			    {% endfor %}
@@ -58,11 +61,11 @@
         </div>
   </div>
 
- <!-- button class="btn btn-danger comment-btn" onclick="showCommentModal()">
+</div>
+<!--button class="btn btn-danger comment-btn" onclick="showCommentModal()">
   <i class="bi bi-chat-left-text"></i>
 </button -->
    </div>
-  </div>
 <!-- Modal -->
 <div id="comment-modal" class="modal">
   <div class="modal-content allCommentBox">

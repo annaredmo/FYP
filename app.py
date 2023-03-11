@@ -18,8 +18,7 @@ import logging
 
 ia = imdb.IMDb()
 
-spotifyObjectG = 0
-spotifyIdG = 0
+
 
 #logging.basicConfig(filename='app.log', level=logging.ERROR)
 
@@ -37,10 +36,11 @@ clientID = '6c68091ecfa44fe9b55ff6bcc5d81c97'
 clientSecret = '36582bf60f224dc3a1035a0335700bef'
 redirectURI = 'https://google.com/'
 
+app.secret_key = 'mysecret1234'
+
 
 # TODO: ISSUE if I dont put global here it crashes ???? even though i am only checking it - dont understand
 def spotipyConnection():
-    global spotifyObjectG, spotifyIdG # it sees I assign it further down so need global!!
     try:
         if 'spotifyId' in session:  # already connected may have to re-connect here
             # spotipyId seems to be in session when I restart the server ?? Maybe another sesion
@@ -57,25 +57,26 @@ def spotipyConnection():
                 new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token())
                 oauth_object.access_token = new_token['access_token']
                 session['spotifyOathObject'] = pickle.dumps(oauth_object)
+            else:
+                # aoth not expired
+                oauth_object = pickle.loads(session['spotifyOathObject'])
 
-            spotifyObjectG = spotipy.Spotify(auth_manager=oauth_object)
-            spotifyIdG = spotifyObjectG.me()['id']
+            spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
+            spotifyId = spotifyObject.me()['id']
 
-            return spotifyObjectG, spotifyIdG
+            return spotifyObject, spotifyId
 
         else:
             #first log in for this server session
             print('spotipyConnection: logon the session')
 
             oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI)
-            #token_dict = oauth_object.get_access_token()  ## looks in cache file for token - if none goes to spotify
-            #token = token_dict['access_token']
-            spotifyObjectG = spotipy.Spotify(auth_manager=oauth_object)
-            spotifyIdG = spotifyObjectG.me()['id']
+            spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
+            spotifyId = spotifyObject.me()['id']
             session['spotifyOathObject'] = pickle.dumps(oauth_object)
-            session['spotifyId'] = spotifyIdG
+            session['spotifyId'] = spotifyId
 
-            return spotifyObjectG, spotifyIdG
+            return spotifyObject, spotifyId
     except spotipy.SpotifyException as e:
         flash("Failed to log into spotify", 'danger')
         return False
@@ -135,6 +136,8 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')  # open on login page after login click
     else:        # POST
+        clearUser() #in case session data is cashed
+
         username = request.form['username']  # the username is gotten from the data givin to the form
         password_candidate = request.form['password']  # TODO: needed ?? password candidate is the password from rhe form
         cur = mysql.connection.cursor()  # open connection to db
@@ -174,6 +177,7 @@ def is_logged_in(f):
         if 'logged_in' in session:
             return f(*args, **kwargs)  # !!WHAT!!
         else:
+            print("FORST FLAAAAAAAAAAAAAAAAAAAASH",session)
             flash('Please login ', 'danger')
             return redirect(url_for('login'))
 
@@ -181,9 +185,7 @@ def is_logged_in(f):
 
 
 def clearUser():
-    global spotifyIdG, spotifyObjectG
     session.clear()
-    spotifyIdG, spotifyObjectG =0, 0
 
 @app.route('/delete_user')
 def delete_user():
@@ -198,7 +200,7 @@ def delete_user():
     except:
         flash ("Sorry Having trouble deleting your account right now :( we dont want you to leave ", 'error')
         pass
-    return redirect(url_for('/')) # TODO: anna changed this from home !1 is this correct - test
+    return redirect(url_for('/')) # TODO: changed this from home !1 is this correct - test
 
 
 
@@ -237,7 +239,6 @@ def storeMovieInDB(movieId,theMovieName,poster):
         #todo check if it exists first??
         sp=getSpotifyObject()
         print('sp=',sp)
-        print('g=',spotifyObjectG)
         print('is=',session['spotifyId'])
         spotifyPlaylistId = getSpotifyObject().user_playlist_create(session['spotifyId'], theMovieName)  # getting the link for the sptify playlist
 
@@ -744,8 +745,10 @@ def welcome():
 #todo print statements still log in production mode - need log file?
 
 if __name__ == '__main__':
-    app.secret_key = 'secret123'
-    app.run(debug=True) #set the application to run in debug mode to get better feedback about errors.
+    app.config['SECRET_KEY'] = 'mysecret1234'
+
+
+    app.run() #set the application to run in debug mode to get better feedback about errors.
 
 #todo issues
 # if tracks list is empty issue in js cloning

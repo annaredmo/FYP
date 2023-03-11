@@ -6,29 +6,20 @@
 :root {
   --blockbuster-yellow: #ffff1a; /* define the variable */
   --blockbuster-blue: #001a4d;
-
+  --table-row-font-size: small;
 }
 
 html {
   font-family: sans-serif;
   -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
+}
 
+html,body{height: 100vh;}
+
+* {
+  box-sizing: border-box;
 }
-/*F
- body {
-  margin: 0;
-  background-image: url('background.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-  color: var(--blockbuster-yellow);
-} */
-/* recommended page */
-/* TABLE todo !!! borders missing
-#rec-recommendedTable {
-   width: 80%;
-}
-*/
 
 a.nav-link  {
       color: #ffff1a;
@@ -40,14 +31,12 @@ a.nav-link  {
     color: var(--blockbuster-yellow);
 
 }
-.row.rec-table-tr{
 
-}
 /* N.B. color of the table text !!! */
 .rec-table-button{
     color: var(--blockbuster-yellow);
     text-align: left;
-    font-size: small;
+    font-size: var(--table-row-font-size);
 }
 
 .table-button{
@@ -66,7 +55,7 @@ th {
 tbody, td, tfoot, thead, tr {
     border-style: none;
         color: var(--blockbuster-yellow);
-        font-size: large;
+        font-size: medium;
 
 }
 /* not working */
@@ -76,107 +65,32 @@ tbody, td, tfoot, thead, tr {
 
     }
 
-/*
-
-
-.rec-table-button{
-    color: var(--blockbuster-yellow);
-}
-
-table.rec-table-no-border {
-  border-collapse: collapse;
-}
-
-table.rec-table-no-border td, table.rec-table-no-border th {
-  border: none;-style
-}
-
-
-.table-border-none {
-  border: none;
-}*/
-
-/*
-.boarder {
-    border: 5px solid;
-    color: var(--blockbuster-yellow);
-}
-*/
-    .surround-table-red {
-      border: 5px solid #f00;
-        border-collapse: separate;
-            max-height: 100%;
-
-
-    }
-    .surround-table-blue {
-      border: 5px solid blue;
-        border-collapse: separate;
-            max-height: 250px;
-
-
-    }
 
 .playlist-scr-table{
 
-    border: 5px solid;
+    border: 3px solid;
     color: var(--blockbuster-yellow);
-    max-height: 50%;
     overflow: hidden; overflow-y: auto; -ms-overflow-style: none ;
-    --webkit-scrollbar: none;
-
+    height: 40vh; /* careful */
 }
+.playlist-scr-table::-webkit-scrollbar { /* Hide the scrollbar */
+    display: none;
+}
+
+
+
 .bottom-margin{
-    margin-bottom: 10%;
+    margin-bottom: 2vh;
 }
-#tbodylist {
-   width: 100%;
-   height: 100%
-}
-table {
-    color: var(--blockbuster-yellow);
 
-  overflow: hidden;
-  overflow-x: auto;
-  overflow-y: auto;
-      -ms-overflow-style: none; /* takes away screen scrollbar not table */
+table {
+  color: var(--blockbuster-yellow);
 
 }
 td {
     color: var(--blockbuster-yellow);
 }
-tbody::-webkit-scrollbar{
-    display: none;
-        width: 0 !important
 
-  }
-
-
-/*
-table, th, td {
-  border: 1px solid;
-  border-color: var(--blockbuster-yellow);
-}
-*/
-
-
-/*
-table, th{
-  color: var(--blockbuster-yellow);
-}
-td{
-  color: var(--blockbuster-yellow);
-}
-tr{
-  color: var(--blockbuster-yellow);
-  background-color: rgba(0, 0, 26 0.6);
-}
-
-*/
-/*
-#login{
-  background-image: url('peep.png');
-}*/
 
 #form-box {
     box-sizing: border-box;
@@ -188,21 +102,7 @@ tr{
     border-radius: 10px;
 } /* login */
 
-/* custom CSS for BS sticky footer */
-/*
-section > .container {
-  padding: 120px 1.5rem 0;
-}
 
-.footer {
-  background-color: #F3E7DA;
-}
-
-.footer > .container {
-  padding-right: 1.5rem;
-  padding-left: 1.5rem;
-}
-*/
 h1 {
     padding-top: 0em;
     color: var(--blockbuster-yellow);
@@ -222,9 +122,6 @@ h3.example{
 	color: blue;
 }
 
-h5{
-	font-size: 1.1em;
-}
 
 
 .long-btn-custom {
@@ -284,25 +181,67 @@ font-size: 0.75rem;
 
 }
 
-.col-6{
+.col-6-rec{
 width:50%}
 
 
+.playlist-title {
+    padding-top: 0em;
+    font-size: var(--table-row-font-size);
+}
 
-/* PLaylist Page */
+/* PLaylist Page  take out 1st and 2nd line and it takes up whole width*/
 .container-playlist {
-padding: 20px;
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
+        height: calc(100% - 100px);
+
 }
 
+.container-playlist-2 {
+//display: flex;
+//flex-direction: column;
+align-items: center;
+justify-content: center;
+
+}
+
+
 .playlist-img {
-width: 80%;  /* 90% didth of its container it will calculate the height*/
-/*height: 700px;*/
+width: 25vw;
+//height: 80vh;
 /*object-fit: cover;*/
 }
+
+
+.like-button {
+//display: flex;
+color: #dc3545;
+font-size: 2.0rem;
+cursor: pointer;
+}
+
+.like-count {
+//display: flex;
+//align-items: center;
+font-size: 1rem;
+margin-left: 10px;
+//margin-right: 30px;
+}
+
+.comment-button{
+
+display: flex;
+align-items: center;
+justify-content: center;
+color: #dc3545;
+font-size: 2.0rem;
+cursor: pointer;
+max-width: 100px;
+}
+/*
 
 .like-button {
 display: flex;
@@ -329,9 +268,9 @@ justify-content: center;
 color: #dc3545;
 font-size: 2.0rem;
 cursor: pointer;
-margin-top: 250px;
 
 }
+*/
 
 /* font for username on welcome page */
 .username-font {
