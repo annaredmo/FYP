@@ -5,7 +5,7 @@
 <!--TOFO scrolbar on laptop slightly off centers it -->
 <div class="container">
 	<div class="row g-4">
-	<h1>Welcome {{session.username}} </h1>
+	<h1>Hi {{session.username}} </h1>
 
 	<a href="/create_playlist"  class="btn long-btn-custom" role="button">Create A New Playlist</a>
 
@@ -20,6 +20,8 @@
 				<td><a href="delete_playlist/{{playlist.playlisttitle}}" ><button class="btn table-button btn-hover">Delete</button></a></td>
 				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
 					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">
+					<input type="hidden" name="spotifylink " value="{{playlist.spotifylink}}">
+
 					<!--input type="hidden" name="button_name" value="Official Soundtrack" -->
 					<button formaction="/recomended" type="submit">Add Tracks</button>
 				</form></td>

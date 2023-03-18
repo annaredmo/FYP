@@ -13,6 +13,17 @@
   </style>
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
   <div class="container-fluid">
+       <!--a class="navbar-brand" href="/">
+                <img src="/static/images/logo.png" />
+            </a-->
+
+                <a class="navbar-brand" href="/">
+                <img src="/static/images/annaDevelopment.png" />
+            </a>
+
+            <!--a class="navbar-brand" href="/">
+<img src="static/images/blockbusterBanner.jpg">
+	</a-->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -22,25 +33,22 @@
       <a class="nav-link" href="/">Popular</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="/Movies">My Soundtracks</a>
-    </li>
-    <li class="nav-item">
       <a class="nav-link" href="/movie">Movies</a>
     </li>
     <li class="nav-item">
       <a class="nav-link" href="/contact">Contact</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="/delete">Delete Account</a>
+      <a class="nav-link" href="/delete_user">Delete Account</a>
     </li>
   </ul>
-    </div>
-  </div>
 
+      <!-- TODO issue on mobile in edge when joined 2 navs - and removed 2 divs here -->
   <ul class="navbar-nav navbar-expand-sm ms-auto mb-2 mb-lg-0">
+
     {% if session.logged_in %}
       <li class="nav-item justify-content-end">
-        <a class="nav-link" href="/dashboard">DashBoard</a>
+        <a class="nav-link" href="/dashboard">My Soundtracks</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="/logout">Logout</a>
@@ -55,5 +63,8 @@
         </li>
     {% endif %}
   </ul>
+          </div>
+  </div>
+
 </nav>
 

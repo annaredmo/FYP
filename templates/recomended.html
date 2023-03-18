@@ -32,7 +32,8 @@
 		<table class="table  table-thick-border table-hover table-bordered" id="recommendedTable">
             <tbody id="tbodyrec">
 			<tr>
-				<th class="table-border-none">Songs for you ... </th>
+				<th class="">Songs for you ... </th>
+                <th></th>
 			</tr>
             </tbody>
         </table>
@@ -126,37 +127,6 @@ function officialSoundtrack() {
 
   fetchAndHandleResponse('/getSongData', {table_data: tableData });
 
-/*
-  fetch('/getSongData', {
-    method: 'POST',
-    body: JSON.stringify({table_data: tableData}),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => {
-    const tbody = document.getElementById("tbodyrec");
-    tbody.innerHTML = "<tr><th class="table-border-none">Official Soundtrack</th></tr>";
-    for (var i = 0; i < data.length; i++) {
-      var row = tbody.insertRow();
-      var cell1 = row.insertCell(0);
-      var cell2 = row.insertCell(1);
-      cell1.innerHTML = data[i][0];
-      cell2.innerHTML = '<button type="button" class="btn rec-table-button my-add-button" onclick="transferTrack(this)">Add</button>';
-      cell1.setAttribute("class", "btn btn-default");
-      cell1.setAttribute("data-song-id", data[i][1]);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-*/
 }
 </script>
 <script>
@@ -197,7 +167,9 @@ function fetchAndHandleResponse(url, data) {
     }
   })
   .catch(error => {
-    console.error('Error:', error);
+    console.error('Error: connection down', error);
+    window.location.href = "{{ url_for('dashboard') }}";
+
   });
 }
 </script>
@@ -216,9 +188,10 @@ async function saveTracks() {
 
   if (response.ok) {
     console.log('Table data was successfully sent to the server');
-    alert('Successfully saved to Play List',tableData);
   } else {
     console.error('Network response was not ok');
+    window.location.href = "{{ url_for('dashboard') }}";
+
   }
 }
 

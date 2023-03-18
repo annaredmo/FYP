@@ -13,10 +13,17 @@ html {
   font-family: sans-serif;
   -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
+
 }
 
-html,body{height: 100vh;}
-
+html,body{height: 100vh;
+}
+body{
+  margin: 0;
+  background-image: url('background.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--blockbuster-yellow);}
 * {
   box-sizing: border-box;
 }
@@ -29,6 +36,10 @@ a.nav-link  {
 .table-thick-border{
     border: 5px solid;
     color: var(--blockbuster-yellow);
+    }
+ .table-dark{
+    background-color: rgba(0, 0, 0, 0.8);
+    --bs-table-bg:
 
 }
 
@@ -37,29 +48,26 @@ a.nav-link  {
     color: var(--blockbuster-yellow);
     text-align: left;
     font-size: var(--table-row-font-size);
+    padding-top: 2vh !important;
 }
 
 .table-button{
     color: var(--blockbuster-yellow);
     text-align: left;
-
 }
 /* makes the line between cells dissapear */
 
-th {
-    border-style: none;
-}
 
 /* style for tables no internal borders N.B. */
 
-tbody, td, tfoot, thead, tr {
+tbody, td, tfoot,thead, tr {
     border-style: none;
         color: var(--blockbuster-yellow);
         font-size: medium;
 
 }
-/* not working */
-    th {
+th {
+        border-style: none;
         border-bottom: 10px!important;
     border-color: var(--blockbuster-yellow);
 
@@ -67,7 +75,6 @@ tbody, td, tfoot, thead, tr {
 
 
 .playlist-scr-table{
-
     border: 3px solid;
     color: var(--blockbuster-yellow);
     overflow: hidden; overflow-y: auto; -ms-overflow-style: none ;
@@ -98,7 +105,7 @@ td {
     background: black;
       opacity: .75;
 
-    padding: 2rem;
+    padding-start: 5rem;
     border-radius: 10px;
 } /* login */
 
@@ -137,7 +144,6 @@ h3.example{
 
 /* Welcome Page */
 .banner-image {
-  position: relative;
   top: 25%;
   width: 100%;
   max-height: 40vh;
@@ -218,9 +224,10 @@ width: 25vw;
 
 .like-button {
 //display: flex;
-color: #dc3545;
+//color: #dc3545;
 font-size: 2.0rem;
 cursor: pointer;
+padding-start
 }
 
 .like-count {
@@ -231,15 +238,24 @@ margin-left: 10px;
 //margin-right: 30px;
 }
 
+/* ALL MESSED UP - NO CMT_BUTTON*/
 .comment-button{
+  vertical-align: middle;
+  text-align: middle;
+  margin-top: 0.5vw;
+  //padding-left: 22vw;
+  width: 25vw;
 
-display: flex;
-align-items: center;
-justify-content: center;
-color: #dc3545;
-font-size: 2.0rem;
-cursor: pointer;
-max-width: 100px;
+
+//  display: flex;
+//align-items: center;
+//justify-content: center;
+//color: #dc3545;
+//font-size: 2.0rem;
+//cursor: pointer;
+//max-width: 100px;
+//  margin: 30px;
+
 }
 /*
 
@@ -280,9 +296,7 @@ cursor: pointer;
 
 /*=========Comment Modal================*/
 /* Style the comment button */
-.comment-btn {
-  margin: 10px;
-}
+
 
 /* Style the modal dialog */
 .modal {

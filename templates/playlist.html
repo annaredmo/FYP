@@ -6,61 +6,54 @@
 
 </style>
 
-<div class="container">
-  <div class="row align-items-center">
-    <div class="col-sm-6">
-      <h1 class="kalam display-3">{{ playList.playlisttitle }} by {{ playList.username }}</h1>
+<div class="container">  <!-- to center it on laptop-->
+ <div class="row grow w-100">
+
+    <div class="col-12"> <!-- less then 12 moves image up -->
+      <h1 class="kalam display-3" style="display: inline;">{{ playList.playlisttitle }} by {{ playList.username }}</h1>
+        <!--button class="btn btn-danger comment-button" onclick="incrementLikes()">
+        <i class="bi bi-heart"></i><span id="like-count2" class="like-count">{{ playList.likes }}</span>
+        </button>
+        <button class="btn btn-danger comment-button" onclick="showCommentModal()">
+        <i class="bi bi-chat-left-text"></i></button-->
+
+        <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
+        <input type="hidden" id="username-playlist" value="{{ playList.username }}">
     </div>
-    <div class="col-sm-3 d-flex justify-content-center">
-      <div class="like-button btn-danger icon-button" onclick="incrementLikes()">
-        <i class="bi bi-heart"></i>
-        <span id="like-count" class="like-count">{{ playList.likes }}</span>
-      </div>
-    </div>
-    <div class="col-sm-3 d-flex justify-content-center">
-      <div class="comment-button btn-danger icon-button" onclick="showCommentModal()">
-        <i class="bi bi-chat-left-text"></i>
-        <span id="create-comment"></span>
-      </div>
-    </div>
-  </div>
-  <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
-  <input type="hidden" id="username-playlist" value="{{ playList.username }}">
 
-
-
-    <div class="container-playlist-2">
-
-  <div class="row  grow w-100">
     <div class="col-5">
-        <img src="{{ playList.imgLink }}" class="playlist-img">
+         <div class="row grow w-100">
+            <img src="{{ playList.imgLink }}" class="playlist-img">
 
+            <button class="btn btn-danger comment-button" onclick="incrementLikes()">
+            <i class="bi bi-heart"></i><span id="like-count" class="like-count">{{ playList.likes }}</span>
+            </button>
+            <button class="btn btn-danger comment-button" onclick="showCommentModal()">
+            <i class="bi bi-chat-left-text"></i></button>
+
+
+         </div>
             </div>
 
         <div class="col-7">
-
               <div class="playlist-scr-table bottom-margin">
                 <table class="table table-hover " >
                 <tbody>
 			    {% for song in playList['tracks'] %}
                     <tr><td class="btn rec-table-button" data-song-id="{{song[1]}}">{{song[0]}}</td></tr>
 			    {% endfor %}
-		        </tbody>
-                </table>
+		        </tbody></table>
               </div>
-
             <div class="playlist-scr-table bottom-margin">
                 <table class="table  table-hover" >
                 <tbody id="commentlist">
                 {% for comment in playList['comments'] %}
                 <tr><td>{{comment[0]}} by <span class="Lucinda">{{comment[1]}}</span></td></tr>
     			{% endfor %}
-	        	</tbody>
-                </table>
+	        	</tbody></table>
             </div>
         </div>
   </div>
-
 </div>
 <!--button class="btn btn-danger comment-btn" onclick="showCommentModal()">
   <i class="bi bi-chat-left-text"></i>
@@ -102,11 +95,7 @@ function showCommentModal() {
 
 // Submit the comment
 async function submitComment() {
-  // Get the comment text from the textarea
   var comment = commentTextarea.value;
-  // Do something with the comment, e.g. send it to the server using AJAX
-  console.log("Comment submitted:", comment);
-  // Hide the modal dialog box
   hideCommentModal();
 
 
