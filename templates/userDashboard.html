@@ -12,12 +12,27 @@
 	<table class="table table-dark table-thick-border  table-hover align-middle text-centre">
 		<tbody>
 			{% for playlist in playlists %}
+
+
+
 			<!-- TODO - what type of button do I want?? What Color table ?? currently green - do I wan it full width??-->
 			<tr>
-				<td><img src="{{playlist.imgLink}}" style="width:104px;height:142px;"><a  href="play_playlist/{{playlist.id}}"  class="btn table-button">{{playlist.playlisttitle}}</a></td>
+
+
+				<td>
+
+			          <form action="/playlist" method="POST">
+						  <input type="hidden" name="spotifylink" value="{{ playlist.spotifylink }}">
+						  <button type="submit"><img src="{{playlist.imgLink}}" style="width:104px;height:142px;"></button>
+					  </form>
+					</td>
+
+				<td><a  href="play_playlist/{{playlist.id}}"  class="btn table-button">{{playlist.playlisttitle}}</a></td>
+
+
 				<!-- TODO causes security error need python method to deal with this - open in new tap etc -->
 				<td><a href="https://open.spotify.com/playlist/{{playlist.spotifylink}}"><button class="btn table-button">Play</button></a></td>
-				<td><a href="delete_playlist/{{playlist.playlisttitle}}" ><button class="btn table-button btn-hover">Delete</button></a></td>
+				<td><a href="delete_playlist/{{playlist.playlisttitle}}"><button class="btn table-button btn-hover">Delete</button></a></td>
 				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
 					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">
 					<input type="hidden" name="spotifylink " value="{{playlist.spotifylink}}">

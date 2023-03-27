@@ -1,24 +1,16 @@
 {% extends 'layout.html' %}
-
 {% block body %}
-<style>
-
-
-</style>
 
 <div class="container">  <!-- to center it on laptop-->
- <div class="row grow w-100">
+    <div class="row grow w-100">
 
-    <div class="col-12"> <!-- less then 12 moves image up -->
-      <h1 class="kalam display-3" style="display: inline;">{{ playList.playlisttitle }} by {{ playList.username }}</h1>
-        <!--button class="btn btn-danger comment-button" onclick="incrementLikes()">
-        <i class="bi bi-heart"></i><span id="like-count2" class="like-count">{{ playList.likes }}</span>
-        </button>
-        <button class="btn btn-danger comment-button" onclick="showCommentModal()">
-        <i class="bi bi-chat-left-text"></i></button-->
+    <div class="col-12">
+      <h1 class="kalam display-3" style="display: inline;">{{ playList.playlisttitle }} by {{ playList.username }}  </h1>
+      <a href="https://open.spotify.com/playlist/{{playList.spotifylink}}" class="btn btn-danger">
+            <i class="bi bi-play-fill"></i></a>
 
         <input type="hidden" id="playlist-id-playlist" value="{{ playList.spotifylink }}">
-        <input type="hidden" id="username-playlist" value="{{ playList.username }}">
+        <input type="hidden" id="username-playlist" value="{{ session['username'] }}">
     </div>
 
     <div class="col-5">
@@ -30,8 +22,6 @@
             </button>
             <button class="btn btn-danger comment-button" onclick="showCommentModal()">
             <i class="bi bi-chat-left-text"></i></button>
-
-
          </div>
             </div>
 
@@ -55,10 +45,7 @@
         </div>
   </div>
 </div>
-<!--button class="btn btn-danger comment-btn" onclick="showCommentModal()">
-  <i class="bi bi-chat-left-text"></i>
-</button -->
-   </div>
+
 <!-- Modal -->
 <div id="comment-modal" class="modal">
   <div class="modal-content allCommentBox">
@@ -92,71 +79,9 @@ function showCommentModal() {
   commentTextarea.value = "";
 
 }
-
-// Submit the comment
-async function submitComment() {
-  var comment = commentTextarea.value;
-  hideCommentModal();
-
-
-  id = document.getElementById("playlist-id-playlist").value;
-    username = document.getElementById("username-playlist").value;
-
-   const data = {
-      comment: comment,
-      spotifyLink: id,
-      username:username
-   };
-   console.log(data, id);
-
-    const response = await fetch('/update_comments', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({table_data: data})
-  });
-  if (response.ok) {
-    console.log('Table data was successfully sent to the server');
-    var tableBody = document.getElementById("commentlist");
-    var newRow = document.createElement("tr");
-    var newCell = document.createElement("td");
-    newCell.textContent = comment+" by "+username; /* TODO doesnt have font */
-    newRow.appendChild(newCell);
-    tableBody.appendChild(newRow);
-
-  } else {
-    console.error('Network response was not ok');
-  }
-}
-
-  async function incrementLikes() {
-    var countEl = document.getElementById('like-count');
-    var count = parseInt(countEl.innerHTML);
-    countEl.innerHTML = count + 1;
-
-    var spotifyLink = document.getElementById("playlist-id-playlist").value;
-    const data = {
-      likes: count+1,
-      spotifyLink: spotifyLink
-    };
-
-    console.log('spotify',data)
-
-    const response = await fetch('/update_likes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({table_data: data})
-  });
-  if (response.ok) {
-    console.log('Table data was successfully sent to the server');
-  } else {
-    console.error('Network response was not ok');
-  }
-  }
 </script>
+<script src="{{ url_for('static', filename='playlistScript.js') }}"></script>
+
 
 {% endblock %}
 

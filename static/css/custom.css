@@ -21,26 +21,31 @@ html,body{height: 100vh;
 body{
   margin: 0;
   background-image: url('background.png');
-  background-repeat: no-repeat;
+  //background-repeat: no-repeat;
   background-size: cover;
   color: var(--blockbuster-yellow);}
 * {
   box-sizing: border-box;
 }
 
+
 a.nav-link  {
       color: #ffff1a;
       font-size: 1.25rem;
-
     }
+
+.navbar-toggler-icon {
+   border-color: #f3cb06;
+   background-color:  var(--blockbuster-blue);
+    color:  var(--blockbuster-yellow);
+  }
 .table-thick-border{
     border: 5px solid;
     color: var(--blockbuster-yellow);
     }
  .table-dark{
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.2);
     --bs-table-bg:
-
 }
 
 /* N.B. color of the table text !!! */
@@ -120,9 +125,9 @@ p{
 }
 #rcorners2 {}
 
-h2 {
-    color: var(--blockbuster-yellow);
-    color: var(--blockbuster-blue);
+h3 {
+    //color: var(--blockbuster-yellow);
+    color: red;
 }
 
 h3.example{
@@ -196,6 +201,15 @@ width:50%}
     font-size: var(--table-row-font-size);
 }
 
+.welcome-playlist-title {
+  font-family: Arial, sans-serif;
+}
+
+.caption h6 {
+  font-family: "Comic Sans MS", sans-serif;
+  font-size: 0.75rem;
+}
+
 /* PLaylist Page  take out 1st and 2nd line and it takes up whole width*/
 .container-playlist {
 display: flex;
@@ -217,7 +231,7 @@ justify-content: center;
 
 .playlist-img {
 width: 25vw;
-//height: 80vh;
+//height: 70vh;
 /*object-fit: cover;*/
 }
 

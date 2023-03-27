@@ -20,7 +20,7 @@
     <div class="row">
         <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-primary" onclick="officialSoundtrack()">Official Soundtrack</button></div>
         <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-danger" onclick="saveTracks()">Save you tracks</button></div>
-        <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-primary" onclick="">Recommended</button></div>
+        <div class="col p-3 me-1 d-grid gap-1"><button type="button" class="btn btn-primary" onclick="getRecommendedracks()">Recommended</button></div>
     </div>
    </div>
 
@@ -32,7 +32,7 @@
 		<table class="table  table-thick-border table-hover table-bordered" id="recommendedTable">
             <tbody id="tbodyrec">
 			<tr>
-				<th class="">Songs for you ... </th>
+				<th class="">Recommended tracks for your Movie </th>
                 <th></th>
 			</tr>
             </tbody>
@@ -42,7 +42,7 @@
         <table class="table  table-thick-border table-hover table-bordered" id="playListTable" >
             <tbody>
 			<tr>
-				<th>Track in </th>
+				<th>Your Fan Track Picks</th>
 			</tr>
 			{% for song in playListTracks %}
 			<tr>
@@ -56,8 +56,10 @@
     </div>
   </div>
 
+    <script src="{{ url_for('static', filename='recommendedScript.js') }}"></script>
 
-<script>
+
+<!--script>
 function removeTrack(pressedRow) {
     /* This method will delete a row */
     console.log("removeTrack: ",pressedRow.parentNode.parentNode);
@@ -97,35 +99,44 @@ function transferTrack(pressedRow) {
  </script>
 
 <script>
-    function get_playlist_ids()
-    {
-        var tableData=[];
-        var table = document.querySelector('#playListTable');
-        var rows = table.querySelectorAll('tr');
+// loading picked tracks into list - they may or may not be saved
+function get_playlist_ids()
+{
+    var tableData=[];
+    var table = document.querySelector('#playListTable');
+    var rows = table.querySelectorAll('tr');
 
-        for (var i = 0; i < rows.length; i++) {
-            var tdElements = rows[i].querySelectorAll('td');
-            for (var j = 0; j < tdElements.length; j++) {
-                var idValue = tdElements[j].getAttribute('data-song-id');    //('id');
-                if (idValue) {
-                    console.log(idValue);
-                    tableData.push(idValue);
-                }
+    for (var i = 0; i < rows.length; i++) {
+        var tdElements = rows[i].querySelectorAll('td');
+        for (var j = 0; j < tdElements.length; j++) {
+            var idValue = tdElements[j].getAttribute('data-song-id');
+            if (idValue) {
+                tableData.push(idValue);
             }
         }
-        console.log('tracks',tableData);
-        return tableData;
     }
+    console.log('tracks',tableData);
+    return tableData;
+}
 </script>
 
 <script>
     //Get Official Playlist get_official_album
 function officialSoundtrack() {
-  // Get the ids from the playlist so there is no repeat
+  // Get the ids from the picked playlist so there is no repeat
   const tableData = get_playlist_ids();
   console.log('officialSoundtrack',tableData);
 
   fetchAndHandleResponse('/getSongData', {table_data: tableData });
+
+}
+//Get recommended tracks from spotify based on official playlist
+function getRecommendedracks() {
+  // Get the ids from the picked playlist so there is no repeat
+  const tableData = get_playlist_ids();
+  console.log('officialSoundtrack',tableData);
+
+  fetchAndHandleResponse('/getRecommendedTracks', {table_data: tableData });
 
 }
 </script>
@@ -173,12 +184,11 @@ function fetchAndHandleResponse(url, data) {
   });
 }
 </script>
-<script>
 async function saveTracks() {
   const tableData = get_playlist_ids();
   console.log('Save tracks', tableData);
 
-  const response = await fetch('/update_table', {
+  const response = await fetch('/updateTracks', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -195,7 +205,7 @@ async function saveTracks() {
   }
 }
 
-</script>
+</script-->
 </div>
 
 {% endblock %}

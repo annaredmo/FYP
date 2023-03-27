@@ -1,10 +1,11 @@
 {% extends 'layout.html' %}
 {% block body %}
-<!-- TODO do I need rows in container ?? container-fluid make it width of screen not working - look at layout-->
 <div class="container">
 <div class="row g-4">
 	<h1>Welcome {{session.username}} </h1>
-		<table class="table table-fluid table-success table-striped table-bordered table-stripped table-hover align-middle text-centre">
+		<table class="table table-dark table-thick-border  table-hover align-middle text-centre">
+
+		<!--table class="table table-dark table-fluid table-striped table-bordered table-stripped table-hover align-middle text-centre"-->
 		<tbody>
 			{% for movie in movieList %}
 			<tr>
