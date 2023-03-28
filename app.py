@@ -317,7 +317,7 @@ def create_playlist():
             myMovieList = []
             for movie in movieList:
                 if not movie.data.get('full-size cover url'):
-                    movie['full-size cover url'] = '.\\static\\images\\temp.png'  # todo:anna: new image for no omg
+                    movie['full-size cover url'] = '.\\static\\images\\noimage.png'  # todo:anna: new image for no omg
                 myMovieList.append([movie.movieID, movie.data['title'], movie.get('full-size cover url')])
             return render_template('pickMovie.html', movieList=myMovieList)
 
