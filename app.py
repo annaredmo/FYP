@@ -51,11 +51,9 @@ def spotipyConnection():
     spotifyObject, spotifyId = 0, 0
     try:
         if 'spotifyId' in session:
-            # get the stored aitoobject
             serialized_oath_object = session['spotifyOathObject']
             oauth_object = pickle.loads(serialized_oath_object)
 
-            # Check if the access token has expired
             try:
                 if oauth_object.is_token_expired(oauth_object.get_cached_token()):
                     print('spotipyConnection: Access token has expired')
