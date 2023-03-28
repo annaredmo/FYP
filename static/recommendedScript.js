@@ -97,7 +97,7 @@ function fetchAndHandleResponse(url, data) {
   })
   .then(data => {
     const tbody = document.getElementById("tbodyrec");
-    tbody.innerHTML = '<tr><th class="table-border-none">Songs for you ...</th></tr>';
+    tbody.innerHTML = '<tr><th class="table-border-none">Recommended tracks for your Movie </th></tr>';
     for (var i = 0; i < data.length; i++) {
       var row = tbody.insertRow();
       var cell1 = row.insertCell(0);
@@ -120,7 +120,7 @@ async function saveTracks() {
   const tableData = get_playlist_ids();
   console.log('Save tracks', tableData);
 
-  const response = await fetch('/update_table', {
+  const response = await fetch('/updateTracks', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

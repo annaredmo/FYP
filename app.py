@@ -37,9 +37,10 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)  # is not actually connecting to database - waits for first connection
 
 #Spotipy setup
-clientID = '6c68091ecfa44fe9b55ff6bcc5d81c97'
-clientSecret = '36582bf60f224dc3a1035a0335700bef'
-redirectURI = "http://localhost:5000/auth/callback"
+clientID =  os.environ.get('FanTraxClientID','6c68091ecfa44fe9b55ff6bcc5d81c97')
+clientSecret = os.environ.get('FanTraxClientSecret','36582bf60f224dc3a1035a0335700bef')
+redirectURI = os.environ.get('FanTraxRedirectURI',"http://localhost:5000/auth/callback")
+
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
 
 
@@ -82,10 +83,11 @@ def spotipyConnection():
             except requests.RequestException:
                 print("spotipyConnection: ERROR requests")
             except Exception as e:  # check for NewConnectionError - no internet
-                print("spotipyConnection: ERROR internat?? ", e)
                 # Error cache file got deleted - user needs to re-authorise
-                print('Error spotipyConnection: ', e)
-                # TODO: ?? why would this be needed - probably wifi return connectToSpotify(session['username'])
+                print('Error spotipyConnection: cache file got deleted - user needs to re-authorise ', e)
+                flash("spotipyConnection: Please log in again to reauthorise with Spotify", 'danger')
+                #todo clearuser and redirect to login??
+
             return spotifyObject, spotifyId
         else:
             print('SpotifpyConnection: Call connectToSpotipy')
@@ -217,18 +219,6 @@ class RegisterForm(Form):
     confirm = PasswordField('confirm Password')
 
 
-def dbGetUserData(username):
-    try:
-        with mysql.connection.cursor() as cursor:
-            if cursor.execute("SELECT * FROM friends WHERE username= %s", [username]):  # find that username in the db
-                data = cursor.fetchone()  # fetch only the first row (the first user that comes up)
-                return data
-
-    except Exception as e:
-        # No database
-        print("dbGetUserData Error: ", e)
-        raise(e)
-    return False
 
 #User login - check database and spotify
 @app.route('/login', methods=['GET', 'POST'])
@@ -273,20 +263,6 @@ def clearUser():
     session.clear()
 
 
-# Delete user and their playlists from DB
-def dbDeleteUser(userId):
-    try:
-        with mysql.connection.cursor() as cursor:
-            cursor.execute("DELETE FROM playlist WHERE userid = %s", (userId,))
-            cursor.execute("DELETE FROM friends WHERE id = %s", (userId,))
-            mysql.connection.commit()
-            return True
-
-    except Exception as e:
-        print("dbDeleteUser Error: ", e)
-        flash("Database error deleting user:" + str(e), 'danger')
-        return False
-
 #delete user from the database
 @app.route('/delete_user')
 @is_logged_in
@@ -307,23 +283,6 @@ def logout():
     clearUser()
     return redirect(url_for('login'))
 
-
-def dbGetUserPlaylists(userId):
-    try:
-        with mysql.connection.cursor() as cursor:
-            # TODO: change playlist to use spotifylink as key
-            result = cursor.execute("SELECT playlisttitle,imgLink,spotifylink from playlist WHERE userid = %s",
-                                    (userId,))
-            if result:
-                return cursor.fetchall()
-            else:
-                flash('No playlists found', 'info')
-                return []
-
-    except Exception as e:
-        print("dbGetUserPlaylists Error: ", e)
-        flash("Database error getting playlists:" + str(e), 'danger')
-        return []
 
 #This is called when user clicks "My Soundtracks"
 @app.route('/dashboard')
@@ -375,26 +334,6 @@ def create_playlist():
     return render_template('add_playlist.html', form=form)  # open function in add_playlist.html
 
 
-def dbCreatePlaylist(userId, theMovieName, playListId, poster, albumId):
-    try:
-        with mysql.connection.cursor() as cursor:
-            # Check if playlist already exists
-            if cursor.execute("SELECT * FROM playlist WHERE userid= %s AND playlisttitle = %s",
-                              (userId, theMovieName)):
-                flash("Playlist already exists", 'info')
-                return False
-            else:
-                #todo UPDATE table_name SET column_name = NULL;
-                cursor.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink,officialplaylist) VALUES (%s,%s,%s,%s, %s)",
-                               (userId, theMovieName, playListId, poster, albumId))  # getting the id from the link
-                mysql.connection.commit()  # comming connection to sql
-                return True
-
-    except Exception as e:
-        print("dbGetUserPlaylists Error: ", e)
-        flash("Database error getting playlists:" + str(e), 'danger')
-        return False
-
 
 @app.route('/pickMovie', methods=['GET', 'POST'])
 @is_logged_in
@@ -419,8 +358,9 @@ def pickMovie():
                 # Get Official Playlist
                 trackList = []
                 albumId=''
-                print("SEarch getsongdata ", theMovieName)
+                print("pick movie ", theMovieName)
                 results = sp.search(theMovieName + ' soundtrack', 10, 0, type="album")
+                #TODO - do more check to see its the best match spotify a bit flaky
                 if results:
                     for x in results['albums']['items']:
                         print('album names', x['name'],x)
@@ -448,25 +388,6 @@ def get_playlistId(playListName):
     pass
 
 
-def dbDeletePlayList(userId, playlistName):
-    try:
-        with mysql.connection.cursor() as cursor:
-            if cursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
-                              (userId, playlistName)):
-                playlistLinks = cursor.fetchone()
-                spotifyLink = playlistLinks['spotifyLink']
-                cursor.execute("DELETE  FROM playlist WHERE spotifylink =%s", (spotifyLink,))
-                mysql.connection.commit()
-                return spotifyLink
-            else:
-                flash("Database error deleting playlist does not exist:", 'danger')
-    except Exception as e:
-        print("dbDeletePlayList Error: ", e)
-        flash("Database error deleting playlist:" + str(e), 'danger')
-
-    return False
-
-
 @app.route('/delete_playlist/<string:playlist>')
 @is_logged_in
 def delete_playlist(playlist):
@@ -488,41 +409,6 @@ def delete_playlist(playlist):
             flash("Spotipy error:" + str(e), 'danger')
     return redirect(url_for('dashboard'))
 
-
-def dbCheckNameOrEmailExists(username, email):
-    #
-    try:
-        with mysql.connection.cursor() as cursor:
-            # if found - flash return false
-
-            if cursor.execute("SELECT * FROM friends WHERE username= %s", [username]):
-                flash("User name already exists, please try another user name:", 'danger')
-                return True
-
-            if cursor.execute("SELECT * FROM friends WHERE email=%s", [email]):
-                flash("Email already exists, please try another Email", 'danger')
-                return True
-
-    except Exception as e:
-        print("dbDeletePlayList Error: ", e)
-        flash("Database error checking user exists :" + str(e), 'danger')
-
-    return False
-
-def dbCreateAccount(username, email, password, spotifyId):
-    #
-
-    try:
-        with mysql.connection.cursor() as cursor:
-            cursor.execute("INSERT INTO friends(email,username,password,spotifyId) VALUES(%s,%s,%s,%s)",
-                        (email, username, password, spotifyId))
-            mysql.connection.commit()
-
-    except Exception as e:
-        print("dbDeletePlayList Error: ", e)
-        flash("Database error checking user exists :" + str(e), 'danger')
-
-    return True
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -563,23 +449,22 @@ def movie():
 #Save the tracks picked by the user for their playlist. Update Spotify playlist
 @app.route('/updateTracks', methods=['POST'])
 def updateTracks():
+    e=''
     try:
         data = request.get_json()
         table_data = data['table_data']
 
-        myCursor = mysql.connection.cursor() #Get the spotifyLink for the playlist
-        if myCursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
-                            (session['id'], session['playListName'])):  # check
-            playlistLinks = myCursor.fetchall()
-            spotifyPlayListId = playlistLinks[0]['spotifyLink']
-            getSpotifyObject().playlist_replace_items(spotifyPlayListId, table_data)  # it wants id as list
-        return 'Table data received and processed successfully'
+        spotifyPlayListId=dbGetSpotifyLink(session['id'], session['playListName']) #Get the spotifyLink for the playlist
+        if spotifyPlayListId:
+            getSpotifyObject().playlist_replace_items(spotifyPlayListId, table_data) #todo - doesn't fail if playlist deleted
+            return 'Table data received and processed successfully'
 
     except Exception as e:
         print('updateTable:', e)
-        response = jsonify({'error': 'An error occurred: {}'.format(e)})
-        response.status_code = 500
-        return response
+
+    response = jsonify({'error': 'An error occurred: {}'.format(e)})
+    response.status_code = 500
+    return response
 
 
 # Get songs from spoitify that match the search enry
@@ -611,21 +496,6 @@ def searchForMatchingTracks():
         response.status_code = 500
         return response
 
-def dbGetOfficialSoundtrack(movieName):
-    try:
-        with mysql.connection.cursor() as cursor:
-
-            if cursor.execute("SELECT officialplaylist from playlist WHERE playlisttitle = %s", [movieName]):
-                data = cursor.fetchone()  #
-                spotifyOfficallink = data.get('officialplaylist', None)
-                return spotifyOfficallink
-
-    except Exception as e:
-        print('dbGetOfficialSoundtrack: ', e)
-        flash("DB Error couldn't get Soundtrack from database", "danger")
-
-    return False
-
 
 # Get offical movie tracks
 @app.route('/getSongData', methods=['GET', 'POST'])
@@ -638,17 +508,18 @@ def getSongData():
         if sp:
             soundTrack=session['playListName']
             print("SEarch getsongdata ", session['playListName'],soundTrack)
-            link=dbGetOfficialSoundtrack(soundTrack)
-            print("in getsongdata link -=",link)
-            results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
-            if results:
-                album_id = results['albums']['items'][0]['id']
+            album_id=dbGetOfficialSoundtrack(soundTrack, session['id'])
+            if album_id:
+                # print("in getsongdata link -=",link)
+                # results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
+                # if results:
+                    #album_id = results['albums']['items'][0]['id']
                 print('album id',album_id)
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     if j['id'] not in table_data:
                         trackList.append([j['name'], j['id']])  # list of lists
-            print(trackList)
+                print(trackList)
             return jsonify(trackList)
     except Exception as e:
         print('getSongData: ', e)
@@ -717,7 +588,7 @@ def recomended():
     except Exception as e:
         # internet error caught in spotifyconnect - redirect here
         print("Error recomended: ", e)
-        flash("Error: Couldn't get playlist details from Spoify ", "danger")
+        flash("Error: Couldn't get playlist details from Spotify - try loggin in again", "danger")
         return redirect(url_for('dashboard'))
 
     return render_template('recomended.html', playListTracks=tracks)
@@ -734,6 +605,99 @@ def recomended():
 
 
 # ======================================================================================================
+
+
+def dbGetSpotifyLink(userId, playlistName):
+    try:
+        with mysql.connection.cursor() as cursor:
+            if cursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
+                              (userId, playlistName)):
+                playlistLinks = cursor.fetchone()
+                spotifyLink = playlistLinks['spotifyLink']
+                return spotifyLink
+            else:
+                flash("Database error getting playlist Link in spotify:", 'danger')
+    except Exception as e:
+        print("dbGetSpotifyLink Error: ", e)
+        flash("Database error getting playlist:" + str(e), 'danger')
+
+    return False
+
+def dbDeletePlayList(userId, playlistName):
+    try:
+        with mysql.connection.cursor() as cursor:
+            if cursor.execute("SELECT spotifyLink FROM playlist WHERE userid= %s AND playlisttitle = %s",
+                              (userId, playlistName)):
+                playlistLinks = cursor.fetchone()
+                spotifyLink = playlistLinks['spotifyLink']
+                cursor.execute("DELETE  FROM playlist WHERE spotifylink =%s", (spotifyLink,))
+                mysql.connection.commit()
+                return spotifyLink
+            else:
+                flash("Database error deleting playlist does not exist:", 'danger')
+    except Exception as e:
+        print("dbDeletePlayList Error: ", e)
+        flash("Database error deleting playlist:" + str(e), 'danger')
+
+    return False
+
+
+
+def dbCheckNameOrEmailExists(username, email):
+    #
+    try:
+        with mysql.connection.cursor() as cursor:
+            # if found - flash return false
+
+            if cursor.execute("SELECT * FROM friends WHERE username= %s", [username]):
+                flash("User name already exists, please try another user name:", 'danger')
+                return True
+
+            if cursor.execute("SELECT * FROM friends WHERE email=%s", [email]):
+                flash("Email already exists, please try another Email", 'danger')
+                return True
+
+    except Exception as e:
+        print("dbDeletePlayList Error: ", e)
+        flash("Database error checking user exists :" + str(e), 'danger')
+
+    return False
+
+def dbCreateAccount(username, email, password, spotifyId):
+    #
+
+    try:
+        with mysql.connection.cursor() as cursor:
+            cursor.execute("INSERT INTO friends(email,username,password,spotifyId) VALUES(%s,%s,%s,%s)",
+                        (email, username, password, spotifyId))
+            mysql.connection.commit()
+
+    except Exception as e:
+        print("dbDeletePlayList Error: ", e)
+        flash("Database error checking user exists :" + str(e), 'danger')
+
+    return True
+
+def dbCreatePlaylist(userId, theMovieName, playListId, poster, albumId):
+    try:
+        with mysql.connection.cursor() as cursor:
+            # Check if playlist already exists
+            if cursor.execute("SELECT * FROM playlist WHERE userid= %s AND playlisttitle = %s",
+                              (userId, theMovieName)):
+                flash("Playlist already exists", 'info')
+                return False
+            else:
+                #todo UPDATE table_name SET column_name = NULL;
+                cursor.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink,officialplaylist) VALUES (%s,%s,%s,%s, %s)",
+                               (userId, theMovieName, playListId, poster, albumId))  # getting the id from the link
+                mysql.connection.commit()  # comming connection to sql
+                return True
+
+    except Exception as e:
+        print("dbGetUserPlaylists Error: ", e)
+        flash("Database error getting playlists:" + str(e), 'danger')
+        return False
+
 def dbSetLikes(likes, spotifyLink):
     try:
         with mysql.connection.cursor() as cursor:
@@ -779,6 +743,101 @@ def update_comments():
     return 'Table data received and processed successfully'
 
 
+# Get data for friends playlist - called from welcome screen
+@app.route("/playlist", methods=["POST"])
+@is_logged_in
+def playlist():
+    try:
+        spotifylink = request.form.get("spotifylink")
+        playList = dbGetPlaylist(spotifylink)
+        if not playList:
+            flash("Playlist no longer exists", 'danger')
+            return redirect(url_for('welcome'))
+        username = dbGetUserName(playList['userid'])
+        playList['username'] = username
+        tracks = []
+        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+
+        # get songs in your playlist and send them to screen
+        lst = spotifyObject.playlist_items(spotifylink)
+        for j in lst['items']:
+            tracks.append([j['track']['name'], j['track']['id']])
+        playList['tracks'] = tracks
+
+        commentlist = []
+        comments = dbGetComments(spotifylink)
+        if comments:
+            for j in comments:
+                commentlist.append([j['comment'], j['username']])
+            playList['comments'] = commentlist
+
+        return render_template("playlist.html", playList=playList)
+    except:
+        print('Playlist Error: ')
+        return redirect(url_for('welcome'))
+
+
+
+
+# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
+@app.route('/')  # 2 ways to get in - via click on button OR from login straight
+@is_logged_in  # @ signifys a a decerator which is a function that extends another function
+def welcome():
+    try:
+        #db_create()
+
+        friendsPlaylist = dbGetFriends(session['id'])
+        return render_template('welcome.html',
+                               playlists=friendsPlaylist)  # sends in the playlist we just got from database
+    except Exception as e:
+        print("dbGetFriends Error: ", e)
+        flash("Database error getting friends playlists :" + str(e), 'danger')
+        return render_template('welcome.html',
+                               playlists=[])  # view function is defined to handle requests to the home page
+
+
+# ======================================================================================================
+
+
+# Delete user and their playlists from DB
+def dbDeleteUser(userId):
+    try:
+        with mysql.connection.cursor() as cursor:
+            cursor.execute("DELETE FROM playlist WHERE userid = %s", (userId,))
+            cursor.execute("DELETE FROM friends WHERE id = %s", (userId,))
+            mysql.connection.commit()
+            return True
+
+    except Exception as e:
+        print("dbDeleteUser Error: ", e)
+        flash("Database error deleting user:" + str(e), 'danger')
+        return False
+
+def dbGetFriends(userId):
+    try:
+        with mysql.connection.cursor() as cursor:
+            if not cursor.execute("SELECT userid, playlisttitle,imgLink,spotifylink from playlist WHERE userid != %s",
+                                  [userId]):  # TODO: move to spotify id (provider?)
+                return []  # No friends ((
+            else:
+                friendsPlaylist = cursor.fetchall()
+
+                # TODO Get username from friends table - shold I store username in playlist instead - is this unique??
+                # TODO change id to userid??
+                for friends in friendsPlaylist:
+                    result = cursor.execute("SELECT username from friends WHERE id = %s",
+                                            (friends.get('userid'),))  # TODO: move to spotify id (provider?)
+                    username = cursor.fetchone().get('username')
+                    friends['username'] = username
+
+    except Exception as e:
+        print("dbGetFriends Error: ", e)
+        flash("Database error getting friends playlists :" + str(e), 'danger')
+        return []
+
+    return friendsPlaylist
+
+
 def dbGetUserName(userId):
     try:
         with mysql.connection.cursor() as cursor:
@@ -819,89 +878,57 @@ def dbGetComments(spotifylink):
     return result
 
 
-# Get data for friends playlist - called from welcome screen
-@app.route("/playlist", methods=["POST"])
-@is_logged_in
-def playlist():
-    try:
-        spotifylink = request.form.get("spotifylink")
-        playList = dbGetPlaylist(spotifylink)
-        if not playList:
-            flash("Playlist no longer exists", 'danger')
-            return redirect(url_for('welcome'))
-        username = dbGetUserName(playList['userid'])
-        playList['username'] = username
-        tracks = []
-        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-
-        # get songs in your playlist and send them to screen
-        lst = spotifyObject.playlist_items(spotifylink)
-        for j in lst['items']:
-            tracks.append([j['track']['name'], j['track']['id']])
-        playList['tracks'] = tracks
-
-        commentlist = []
-        comments = dbGetComments(spotifylink)
-        if comments:
-            for j in comments:
-                commentlist.append([j['comment'], j['username']])
-            playList['comments'] = commentlist
-
-        return render_template("playlist.html", playList=playList)
-    except:
-        print('Playlist Error: ')
-        return redirect(url_for('welcome'))
-
-
-def dbGetFriends(userId):
+def dbGetUserData(username):
     try:
         with mysql.connection.cursor() as cursor:
-            if not cursor.execute("SELECT userid, playlisttitle,imgLink,spotifylink from playlist WHERE userid != %s",
-                                  [userId]):  # TODO: move to spotify id (provider?)
-                return []  # No friends ((
-            else:
-                friendsPlaylist = cursor.fetchall()
-
-                # TODO Get username from friends table - shold I store username in playlist instead - is this unique??
-                # TODO change id to userid??
-                for friends in friendsPlaylist:
-                    result = cursor.execute("SELECT username from friends WHERE id = %s",
-                                            (friends.get('userid'),))  # TODO: move to spotify id (provider?)
-                    username = cursor.fetchone().get('username')
-                    friends['username'] = username
+            if cursor.execute("SELECT * FROM friends WHERE username= %s", [username]):  # find that username in the db
+                data = cursor.fetchone()  # fetch only the first row (the first user that comes up)
+                return data
 
     except Exception as e:
-        print("dbGetFriends Error: ", e)
-        flash("Database error getting friends playlists :" + str(e), 'danger')
+        # No database
+        print("dbGetUserData Error: ", e)
+        raise(e)
+    return False
+
+def dbGetUserPlaylists(userId):
+    try:
+        with mysql.connection.cursor() as cursor:
+            # TODO: change playlist to use spotifylink as key
+            result = cursor.execute("SELECT playlisttitle,imgLink,spotifylink from playlist WHERE userid = %s",
+                                    (userId,))
+            if result:
+                return cursor.fetchall()
+            else:
+                flash('No playlists found', 'info')
+                return []
+
+    except Exception as e:
+        print("dbGetUserPlaylists Error: ", e)
+        flash("Database error getting playlists:" + str(e), 'danger')
         return []
 
-    return friendsPlaylist
 
+def dbGetOfficialSoundtrack(movieName, userId):
+    try:
+        with mysql.connection.cursor() as cursor:
+
+            if cursor.execute("SELECT officialplaylist from playlist WHERE playlisttitle = %s AND userid = %s", [movieName, userId]):
+                data = cursor.fetchone()  #
+                spotifyOfficallink = data.get('officialplaylist', None)
+                return spotifyOfficallink
+
+    except Exception as e:
+        print('dbGetOfficialSoundtrack: ', e)
+        flash("DB Error couldn't get Soundtrack from database", "danger")
+
+    return False
 
 def db_create():
     cursor = mysql.connection.cursor()
     cursor.execute("SHOW DATABASES")
     databases = cursor.fetchall()
 
-
-# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
-@app.route('/')  # 2 ways to get in - via click on button OR from login straight
-@is_logged_in  # @ signifys a a decerator which is a function that extends another function
-def welcome():
-    try:
-        #db_create()
-
-        friendsPlaylist = dbGetFriends(session['id'])
-        return render_template('welcome.html',
-                               playlists=friendsPlaylist)  # sends in the playlist we just got from database
-    except Exception as e:
-        print("dbGetFriends Error: ", e)
-        flash("Database error getting friends playlists :" + str(e), 'danger')
-        return render_template('welcome.html',
-                               playlists=[])  # view function is defined to handle requests to the home page
-
-
-# ======================================================================================================
 
 def check_and_create_database():
     try:
