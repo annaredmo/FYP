@@ -33,6 +33,8 @@ app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', 'password')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'mydatabase')
 app.config['MYSQL_DB'] = 'fan_tracks'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+app.secret_key = 'mysecret12345annaredmo'
+
 
 mysql = MySQL(app)  # is not actually connecting to database - waits for first connection
 
@@ -40,11 +42,7 @@ mysql = MySQL(app)  # is not actually connecting to database - waits for first c
 clientID =  os.environ.get('FanTraxClientID','6c68091ecfa44fe9b55ff6bcc5d81c97')
 clientSecret = os.environ.get('FanTraxClientSecret','36582bf60f224dc3a1035a0335700bef')
 redirectURI = os.environ.get('FanTraxRedirectURI',"http://localhost:5000/auth/callback")
-
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
-
-
-app.secret_key = 'mysecret12345annaredmo'
 
 
 def spotipyConnection():
@@ -66,7 +64,7 @@ def spotipyConnection():
                 #     oauth_object = pickle.loads(session['spotifyOathObject'])
                 #check connection
                 spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
-                spotifyId = spotifyObject.me()['id'] #TODO done???
+                spotifyId = spotifyObject.me()['id']
                 print('spotipyConnection: In spotifyid in session',spotifyId, session['username'])
 
 
@@ -126,6 +124,8 @@ def callback():
             #registering - spotify looks ok
             dbCreateAccount(session['username'], session['email'], session['password'], spotifyId)
             clearUser() # want user to log in
+            flash("Successfully created new user: "+ session['username'] , 'success')
+
             return redirect(url_for('login'))  # send user to welcome
 
     except spotipy.SpotifyException as e:
@@ -138,7 +138,6 @@ def callback():
 def validInternetConnection():
     try:
         requests.get('http://www.spotify.com') #check internet first - before redirect to spotify for authorization
-        print('bbefor tru')
         return True
     except:
         # If there was an exception, assume there is no internet connection
@@ -308,7 +307,6 @@ def create_playlist():
             if not getSpotifyObject():
                 return redirect(url_for('welcome'))
             movieList = ia.search_movie(playlist)  # TODO - if wifo down - crashes - error not caught
-            print('movie match list', movieList)
             if not movieList:
                 flash("No movie match found", 'info')
                 return render_template('add_playlist.html',
@@ -339,7 +337,7 @@ def pickMovie():
     movie_json = request.form['movie']
     movie = ast.literal_eval(movie_json)
     if movie:
-        print("MOVIE =", movie)
+        #print("MOVIE =", movie)
         theMovieName = movie[1]
         poster = movie[2]
         albumId = ''
@@ -356,18 +354,18 @@ def pickMovie():
                 # Get Official Playlist
                 trackList = []
                 albumId=''
-                print("pick movie ", theMovieName)
+                #print("pick movie ", theMovieName)
                 results = sp.search(theMovieName + ' soundtrack', 10, 0, type="album")
                 #TODO - do more check to see its the best match spotify a bit flaky
                 if results:
                     for x in results['albums']['items']:
                         print('album names', x['name'],x)
                     albumId = results['albums']['items'][0]['id']
-                    print('album id', albumId)
+                    #print('album id', albumId)
                     lst = sp.album_tracks(albumId)
                     for j in lst['items']:  # make sure track is not already picked
                         trackList.append([j['name'], j['id']])  # list of lists
-                    print('in pickmovie ',trackList)
+                    #print('in pickmovie ',trackList)
 
                     #####################################################################
                 if dbCreatePlaylist(session['id'], theMovieName, spotifyPlaylist['id'], poster,albumId):
@@ -412,7 +410,7 @@ def delete_playlist(playlist):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
-    print('in register')
+    #print('in register')
     try:
         if request.method == 'POST' and form.validate():
             email = form.email.data
@@ -484,7 +482,7 @@ def searchForMatchingTracks():
         for j in lst['items']:
             # only add to list if not already in not in playlist
             if j['id'] not in table_data:
-                print(j['name'])
+                #print(j['name'])
                 trackList.append([j['name'], j['id']])  # list of lists
         return jsonify(trackList)
     except Exception as e:
@@ -505,19 +503,19 @@ def getSongData():
         sp = getSpotifyObject()
         if sp:
             soundTrack=session['playListName']
-            print("SEarch getsongdata ", session['playListName'],soundTrack)
+            #print("SEarch getsongdata ", session['playListName'],soundTrack)
             album_id=dbGetOfficialSoundtrack(soundTrack, session['id'])
             if album_id:
                 # print("in getsongdata link -=",link)
                 # results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
                 # if results:
                     #album_id = results['albums']['items'][0]['id']
-                print('album id',album_id)
+                #print('album id',album_id)
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     if j['id'] not in table_data:
                         trackList.append([j['name'], j['id']])  # list of lists
-                print(trackList)
+                #print(trackList)
             return jsonify(trackList)
     except Exception as e:
         print('getSongData: ', e)
@@ -540,21 +538,21 @@ def getRecommendedTracks():
         sp = getSpotifyObject()
         if sp:
             soundTrack=session['playListName']
-            print("SEarch getsongdata ", session['playListName'],soundTrack)
+            #print("SEarch getsongdata ", session['playListName'],soundTrack)
             results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
             if results:
                 album_id = results['albums']['items'][0]['id']
-                print('album id',album_id)
+                #print('album id',album_id)
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     id=j['id']
                     #Get 2 suggestions for each song
                     reccId = sp.recommendations(seed_tracks=[id], limit=num_recommendations)
                     for i in reccId['tracks']:
-                        print(i['name'])
+                        #print(i['name'])
                         if i['id'] not in table_data:
                             trackList.append([i['name'], i['id']])  # list of lists
-            print(trackList)
+            #print(trackList)
             return jsonify(trackList)
     except Exception as e:
         print('getSongData: ', e)
@@ -575,7 +573,7 @@ def recomended():
         spotifyLink = request.form.get("spotifylink ")
         tracks = []
         if playListName and spotifyLink:
-            print('rec ', playListName, spotifyLink)
+            #print('rec ', playListName, spotifyLink)
             session['playListName'] = playListName
             spotifyObject = getSpotifyObject()  # spotify object assignment
             # get songs in your playlist and send them to screen
@@ -712,7 +710,7 @@ def update_likes():
     likes = table_data.get('likes')
     spotifyLink = table_data.get('spotifyLink')
 
-    print('supdate_likes: ', likes, spotifyLink, table_data)
+    #print('supdate_likes: ', likes, spotifyLink, table_data)
     if likes and spotifyLink:
         dbSetLikes(likes, spotifyLink)
 
