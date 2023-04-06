@@ -2,11 +2,15 @@ import mysql.connector
 import os
 import subprocess
 
+
+# Setting up the database for FanTrax
+#Please set envirooment cariables for MYSQL_USER and MYSQL_PASSWORD or update the python variables
+
 host = os.environ.get('MYSQL_HOST', 'localhost')
 user = os.environ.get('MYSQL_USER', 'root')
 password = os.environ.get('MYSQL_PASSWORD', 'password')
 
-database_name = "fan_tracks2"
+database_name = "fan_tracks"
 
 
 try:
@@ -36,8 +40,6 @@ try:
     dir = os.path.dirname(os.path.abspath(__file__))
     sqlFile = os.path.join(dir, "fan_tracks2.sql")
 
-    #subprocess.run(['mysql', '-u', user, '-p' + password, '-e', 'USE fan_tracks2; source fan_tracks2.sql'])
-    #subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks2', '<', 'fan_tpl'])
     subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks2', '<', sqlFile], shell=True)
     print("==================== CREATED DATABASE - Please run - flask run (or python app.py) =====================")
  
