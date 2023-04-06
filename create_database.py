@@ -1,32 +1,49 @@
 import mysql.connector
 import os
+import subprocess
 
 host = os.environ.get('MYSQL_HOST', 'localhost')
-user = os.environ.get('MYSQL_USER', 'yourusername')
-password = os.environ.get('MYSQL_PASSWORD', 'yourpassword')
+user = os.environ.get('MYSQL_USER', 'root')
+password = os.environ.get('MYSQL_PASSWORD', 'password')
 
-# get the MySQL database name from the environment or use a default value
-database_name = os.environ.get('MYSQL_DATABASE', 'annas-other-db')
+database_name = "fan_tracks2"
 
-# establish a connection to the MySQL server
-mydb = mysql.connector.connect(
-  host=host,
-  user=user,
-  password=password
-)
 
-# check if the database exists
-mycursor = mydb.cursor()
-mycursor.execute("SHOW DATABASES")
-databases = mycursor.fetchall()
-database_exists = False
-for database in databases:
-    if database[0] == database_name:
-        database_exists = True
+try:
+    # establish a connection to the MySQL server
+    mydb = mysql.connector.connect(
+      host=host,
+      user=user,
+      password=password
+    )
 
-# if the database does not exist, create it
-if not database_exists:
-    mycursor.execute("CREATE DATABASE {}".format(database_name))
-    print("Database created successfully")
-else:
-    print("Database already exists")
+    # check if the database exists
+    mycursor = mydb.cursor()
+    mycursor.execute("SHOW DATABASES")
+    databases = mycursor.fetchall()
+    database_exists = False
+    for database in databases:
+        if database[0] == database_name:
+            database_exists = True
+
+    # if the database does not exist, create it
+    if not database_exists:
+        mycursor.execute("CREATE DATABASE {}".format(database_name))
+        print("Database created successfully")
+    else:
+        print("Database already exists")
+        
+    dir = os.path.dirname(os.path.abspath(__file__))
+    sqlFile = os.path.join(dir, "fan_tracks2.sql")
+
+    #subprocess.run(['mysql', '-u', user, '-p' + password, '-e', 'USE fan_tracks2; source fan_tracks2.sql'])
+    #subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks2', '<', 'fan_tpl'])
+    subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks2', '<', sqlFile], shell=True)
+    print("==================== CREATED DATABASE - Please run - flask run (or python app.py) =====================")
+ 
+except Exception as e:
+    print("==================== ERROR =====================")
+    print("Error creating database for FanTrax database")
+    print("check username and password for MYSql - set as environment variables or update python variables: ")
+    print(e)
+ 

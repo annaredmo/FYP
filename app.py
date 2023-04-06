@@ -5,24 +5,20 @@ from MySQLdb import OperationalError, ProgrammingError
 from wtforms import Form, StringField, PasswordField, validators
 # from passlib.hash import sha256_crypt
 from functools import wraps
-# import webbrowser
 
 import os
 import requests
-# from requests.exceptions import ConnectionError
 import spotipy
 
 from flask import jsonify
 import imdb
 import pickle
 import ast
-import webview
 
 # import logging
+# logging.basicConfig(filename='app.log', level=logging.ERROR)
 
 ia = imdb.IMDb()
-
-# logging.basicConfig(filename='app.log', level=logging.ERROR)
 
 app = Flask(__name__)
 
@@ -30,20 +26,18 @@ app = Flask(__name__)
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', 'password')
-app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'mydatabase')
 app.config['MYSQL_DB'] = 'fan_tracks'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-app.secret_key = 'mysecret12345annaredmo'
+app.secret_key = 'mysecret123456annaredmo'
 
 
-mysql = MySQL(app)  # is not actually connecting to database - waits for first connection
+mysql = MySQL(app)
 
 #Spotipy setup
 clientID =  os.environ.get('FanTraxClientID','6c68091ecfa44fe9b55ff6bcc5d81c97')
 clientSecret = os.environ.get('FanTraxClientSecret','36582bf60f224dc3a1035a0335700bef')
 redirectURI = os.environ.get('FanTraxRedirectURI',"http://localhost:5000/auth/callback")
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
-
 
 def spotipyConnection():
     spotifyObject, spotifyId = 0, 0
@@ -59,14 +53,9 @@ def spotipyConnection():
                     new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token()) #
                     oauth_object.access_token = new_token['access_token']
                     session['spotifyOathObject'] = pickle.dumps(oauth_object)
-                # else:
-                #     # aoth not expired TODO TAKE OUT DONE ALREADY
-                #     oauth_object = pickle.loads(session['spotifyOathObject'])
-                #check connection
                 spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
                 spotifyId = spotifyObject.me()['id']
                 print('spotipyConnection: In spotifyid in session',spotifyId, session['username'])
-
 
             except spotipy.SpotifyException as e:
                 print("spotipyConnection: SpotifyException", e)
@@ -123,16 +112,16 @@ def callback():
         else:
             #registering - spotify looks ok
             dbCreateAccount(session['username'], session['email'], session['password'], spotifyId)
-            clearUser() # want user to log in
+            clearUser() # want user to log inv
             flash("Successfully created new user: "+ session['username'] , 'success')
-
             return redirect(url_for('login'))  # send user to welcome
 
     except spotipy.SpotifyException as e:
         print('Spotifpycallback:', e)
-        flash("spotipyConnection: Failed to log into spotify", 'danger')
+        clearUser()
+        flash("User not registered in the Developer Dashboard: please contact the developer to be added", 'danger')
 
-    return redirect(url_for('login'))  # send user to welcome
+    return redirect(url_for('login'))  # send ser to welcome
 
 #Test spotify is available
 def validInternetConnection():
@@ -164,7 +153,7 @@ def connectToSpotify(username):
 
     except spotipy.SpotifyException as e:
         print("connectToSpotify: SpotifyException", e)
-        flash("connectToSpotify: Failed to log into spotify", 'danger')
+        flash("connectToSpotify: Failed to log into spotify hhhhh", 'danger')
     except spotipy.SpotifyOauthError as e:
         print("connectToSpotify: SpotifyOauthError", e)
     except requests.ConnectionError:
@@ -179,33 +168,25 @@ def connectToSpotify(username):
 
 
 # Handle error that slipped through - flash error and redirect to Welcome page
-# Or redirect to an error page TODO no database? rename database to test
+# Or redirect to an error page
 @app.errorhandler(Exception)
 def basic_error(e):
-    print("An error occured:" + str(e))
     # render an error page in some instances
-    if isinstance(e, requests.exceptions.ConnectionError):
-        # handle connection errors
-        msg = "Error: Internet is down: "
-    elif isinstance(e, ProgrammingError):
+
+    if isinstance(e, ProgrammingError):
         print('Error: Please fix and restart the server', e)
         return render_template('error.html', error_message=e), 500
     elif isinstance(e, OperationalError):  #
         print('Error: Please fix and restart the server', e)
         return render_template('error.html', error_message=e), 500
+    elif isinstance(e, requests.exceptions.ConnectionError):
+        # handle connection errors
+        msg = "Error: Internet is down: "
     else:
         # handle all other exceptions
         msg = "Error: "
-
-    print("Error Basic_Error: ",e)
-    #flash(msg + str(e), 'danger')  # TODO take str(e) out when finished testing
-    return redirect(url_for('dashboard'))  # TODO change to welcome
-
-
-# @app.route('/favicon.ico')
-# def favicon():
-#   return url_for('static', filename='static/image/favicon.ico')
-
+    print("An error occured:" + msg + str(e))
+    return redirect(url_for('welcome'))
 
 class RegisterForm(Form):
     # name = StringField('Name', [validators.Length(min=1, max=50)])
@@ -214,7 +195,6 @@ class RegisterForm(Form):
     password = PasswordField('Password', [validators.DataRequired(),
                                           validators.EqualTo('confirm', message='Password do not match')])
     confirm = PasswordField('confirm Password')
-
 
 
 #User login - check database and spotify
@@ -350,7 +330,6 @@ def pickMovie():
             else:   #Get Playlist for Movie in spotify
                 spotifyPlaylist = sp.user_playlist_create(session['spotifyId'],
                                                           theMovieName)
-                ########################################################
                 # Get Official Playlist
                 trackList = []
                 albumId=''
@@ -365,9 +344,6 @@ def pickMovie():
                     lst = sp.album_tracks(albumId)
                     for j in lst['items']:  # make sure track is not already picked
                         trackList.append([j['name'], j['id']])  # list of lists
-                    #print('in pickmovie ',trackList)
-
-                    #####################################################################
                 if dbCreatePlaylist(session['id'], theMovieName, spotifyPlaylist['id'], poster,albumId):
                     flash(f"Added playlist for Movie {theMovieName}", 'success')
         except Exception as e:  # if it doesnt connect
@@ -506,11 +482,6 @@ def getSongData():
             #print("SEarch getsongdata ", session['playListName'],soundTrack)
             album_id=dbGetOfficialSoundtrack(soundTrack, session['id'])
             if album_id:
-                # print("in getsongdata link -=",link)
-                # results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
-                # if results:
-                    #album_id = results['albums']['items'][0]['id']
-                #print('album id',album_id)
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     if j['id'] not in table_data:
@@ -589,19 +560,9 @@ def recomended():
 
     return render_template('recomended.html', playListTracks=tracks)
 
-
-#
-# @app.route('/your-url')
-# def your_url():
-#     return render_template('your_url.html',
-#                            username=request.args['username'])
-#
-#     # return 'message'
-#     # return render_template('your_url.html', code=request.args['code'])
-
-
 # ======================================================================================================
-
+# Database functions
+# #######################################################################################################
 
 def dbGetSpotifyLink(userId, playlistName):
     try:
@@ -636,7 +597,6 @@ def dbDeletePlayList(userId, playlistName):
         flash("Database error deleting playlist:" + str(e), 'danger')
 
     return False
-
 
 
 def dbCheckNameOrEmailExists(username, email):
@@ -792,9 +752,6 @@ def welcome():
                                playlists=[])  # view function is defined to handle requests to the home page
 
 
-# ======================================================================================================
-
-
 # Delete user and their playlists from DB
 def dbDeleteUser(userId):
     try:
@@ -813,16 +770,13 @@ def dbGetFriends(userId):
     try:
         with mysql.connection.cursor() as cursor:
             if not cursor.execute("SELECT userid, playlisttitle,imgLink,spotifylink from playlist WHERE userid != %s",
-                                  [userId]):  # TODO: move to spotify id (provider?)
+                                  [userId]):
                 return []  # No friends ((
             else:
                 friendsPlaylist = cursor.fetchall()
-
-                # TODO Get username from friends table - shold I store username in playlist instead - is this unique??
-                # TODO change id to userid??
                 for friends in friendsPlaylist:
                     result = cursor.execute("SELECT username from friends WHERE id = %s",
-                                            (friends.get('userid'),))  # TODO: move to spotify id (provider?)
+                                            (friends.get('userid'),))
                     username = cursor.fetchone().get('username')
                     friends['username'] = username
 
@@ -955,6 +909,6 @@ if __name__ == '__main__':
     # check_and_create_database()
     # db_create()
 
-    app.config['SECRET_KEY'] = 'mysecret12345annaredmo'
+    app.config['SECRET_KEY'] = 'mysecret123456annaredmo'
     app.run()  # set the application to run in debug mode to get better feedback about errors.
 
