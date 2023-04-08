@@ -1,48 +1,36 @@
 {% extends 'layout.html' %}
 {% block body %}
 
-<!-- TODO do I need rows in container ?? container-fluid make it width of screen not working - look at layout-->
-<!--TOFO scrolbar on laptop slightly off centers it -->
 <div class="container">
 	<div class="row g-4">
+
+
 	<h1>Hi {{session.username}} </h1>
 
 	<a href="/create_playlist"  class="btn long-btn-custom" role="button">Create A New Playlist</a>
-
-	<table class="table table-dark table-thick-border  table-hover align-middle text-centre">
+	<table class="table table-dark table-thick-border  table-hover align-middle text-centre rec-scr-table">
 		<tbody>
 			{% for playlist in playlists %}
-
-
-
-			<!-- TODO - what type of button do I want?? What Color table ?? currently green - do I wan it full width??-->
 			<tr>
-
-
 				<td>
-
-			          <form action="/playlist" method="POST">
-						  <input type="hidden" name="spotifylink" value="{{ playlist.spotifylink }}">
-						  <button type="submit"><img src="{{playlist.imgLink}}" style="width:104px;height:142px;"></button>
-					  </form>
-					</td>
+				  <form action="/playlist" method="POST">
+					  <input type="hidden" name="spotifylink" value="{{ playlist.spotifylink }}">
+						  <button type="submit"><img src="{{playlist.imgLink}}"  class="small-img"></button>
+				  </form>
+				</td>
 
 				<td><a  href="play_playlist/{{playlist.id}}"  class="btn table-button">{{playlist.playlisttitle}}</a></td>
-
-
-				<!-- TODO causes security error need python method to deal with this - open in new tap etc -->
 				<td><a href="https://open.spotify.com/playlist/{{playlist.spotifylink}}"><button class="btn table-button">Play</button></a></td>
 				<td><a href="delete_playlist/{{playlist.playlisttitle}}"><button class="btn table-button btn-hover">Delete</button></a></td>
 				<td><form id = "PlaylistSelect" action="/recomended" method="POST">
 					<input type="hidden" name="playlistTitle" value="{{playlist.playlisttitle}}">
 					<input type="hidden" name="spotifylink " value="{{playlist.spotifylink}}">
-
-					<!--input type="hidden" name="button_name" value="Official Soundtrack" -->
 					<button formaction="/recomended" type="submit">Add Tracks</button>
 				</form></td>
+			</tr>
 			{% endfor %}
 		</tbody>
-	</table>
-</div>
+		</table>
+		</div>
 </div>
 {% endblock %}

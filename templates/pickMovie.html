@@ -4,23 +4,17 @@
 <div class="row g-4">
 	<h1>Welcome {{session.username}} </h1>
 		<table class="table table-dark table-thick-border  table-hover align-middle text-centre">
-
-		<!--table class="table table-dark table-fluid table-striped table-bordered table-stripped table-hover align-middle text-centre"-->
-		<tbody>
+			<tbody>
 			{% for movie in movieList %}
 			<tr>
-
-				<td><img src="{{movie[2]}}" style="width:104px;height:142px;"></td>
+				<td><img src="{{movie[2]}}" class="small-img"></td>
 				<td>{{movie[1]}}</td>
 
 				<td><form id = "movieListSelect" action="/pickMovie" method="POST">
 					<input type="hidden" name="movie" value="{{ movie }}">
 					<button formaction="/pickMovie" type="submit">Select Movie</button>
-
 				</form></td>
 			</tr>
-							<!--p>Debug: {{ movie }}</p-->
-
 			{% endfor %}
 		</tbody>
 	</table>

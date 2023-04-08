@@ -11,7 +11,6 @@ async function submitComment() {
       spotifyLink: id,
       username:username
    };
-   console.log(data, id);
 
     const response = await fetch('/update_comments', {
     method: 'POST',
@@ -21,7 +20,6 @@ async function submitComment() {
     body: JSON.stringify({table_data: data})
   });
   if (response.ok) {
-    console.log('Table data was successfully sent to the server');
     var tableBody = document.getElementById("commentlist");
     var newRow = document.createElement("tr");
     var newCell = document.createElement("td");
@@ -44,8 +42,6 @@ async function submitComment() {
       likes: count+1,
       spotifyLink: spotifyLink
     };
-
-    console.log('spotify',data)
 
     const response = await fetch('/update_likes', {
     method: 'POST',

@@ -21,13 +21,13 @@ html,body{height: 100vh;
 body{
   margin: 0;
   background-image: url('background.png');
-  //background-repeat: no-repeat;
   background-size: cover;
-  color: var(--blockbuster-yellow);}
+  color: var(--blockbuster-yellow);
+  }
+
 * {
   box-sizing: border-box;
 }
-
 
 a.nav-link  {
       color: #ffff1a;
@@ -60,15 +60,13 @@ a.nav-link  {
     color: var(--blockbuster-yellow);
     text-align: left;
 }
-/* makes the line between cells dissapear */
-
 
 /* style for tables no internal borders N.B. */
 
 tbody, td, tfoot,thead, tr {
     border-style: none;
         color: var(--blockbuster-yellow);
-        font-size: medium;
+        font-size: small; //
 
 }
 th {
@@ -78,6 +76,12 @@ th {
 
     }
 
+.rec-scr-table{
+    border: 3px solid;
+    color: var(--blockbuster-yellow);
+    //overflow: hidden; overflow-y: auto; -ms-overflow-style: none ;
+    //height: 40vh; /* careful */
+}
 
 .playlist-scr-table{
     border: 3px solid;
@@ -88,8 +92,6 @@ th {
 .playlist-scr-table::-webkit-scrollbar { /* Hide the scrollbar */
     display: none;
 }
-
-
 
 .bottom-margin{
     margin-bottom: 2vh;
@@ -103,17 +105,15 @@ td {
     color: var(--blockbuster-yellow);
 }
 
-
 #form-box {
     box-sizing: border-box;
     margin: 2rem 0;
     background: black;
-      opacity: .75;
+    opacity: .75;
 
     padding-start: 5rem;
     border-radius: 10px;
 } /* login */
-
 
 h1 {
     padding-top: 0em;
@@ -134,17 +134,42 @@ h3.example{
 	color: blue;
 }
 
-
-
 .long-btn-custom {
     background-color: yellow !important;
     color: red  !important;
 }
 
+.small-img{
+    width:6rem;
+    height:8rem;
+}
+
+/* Set the width and height to 6rem for all devices */
+.small-img {
+  width: 6rem;
+  height: 8rem;
+}
+
+/* Override width to 5rem for medium and smaller devices - so no overflow */
+@media (max-width: 768px) {
+  .small-img {
+    width: 5rem;
+  }
+}
+
+
+
 .move-cell {
   vertical-align: middle;
   text-align: center;
   border: 1px solid black;
+}
+
+@media (max-width: 767px) {
+	.table td {
+	    padding: 0;
+	    margin: 0;
+	}
 }
 
 /* Welcome Page */
@@ -175,9 +200,7 @@ h3.example{
 }
 
 .btn-lg{
-
 width: 100%;
-
 }
 
 .thumbnail .caption {
@@ -193,8 +216,8 @@ font-size: 0.75rem;
 }
 
 .col-6-rec{
-width:50%}
-
+width:50%
+}
 
 .playlist-title {
     padding-top: 0em;
@@ -216,40 +239,29 @@ display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
-        height: calc(100% - 100px);
+height: calc(100% - 100px);
 
 }
-
+/*
 .container-playlist-2 {
-//display: flex;
-//flex-direction: column;
 align-items: center;
 justify-content: center;
 
-}
-
+}*/
 
 .playlist-img {
 width: 25vw;
-//height: 70vh;
-/*object-fit: cover;*/
 }
 
-
 .like-button {
-//display: flex;
-//color: #dc3545;
 font-size: 2.0rem;
 cursor: pointer;
 padding-start
 }
 
 .like-count {
-//display: flex;
-//align-items: center;
 font-size: 1rem;
 margin-left: 10px;
-//margin-right: 30px;
 }
 
 /* ALL MESSED UP - NO CMT_BUTTON*/
@@ -259,48 +271,8 @@ margin-left: 10px;
   margin-top: 0.5vw;
   //padding-left: 22vw;
   width: 25vw;
-
-
-//  display: flex;
-//align-items: center;
-//justify-content: center;
-//color: #dc3545;
-//font-size: 2.0rem;
-//cursor: pointer;
-//max-width: 100px;
-//  margin: 30px;
-
-}
-/*
-
-.like-button {
-display: flex;
-align-items: center;
-justify-content: center;
-color: #dc3545;
-font-size: 2.0rem;
-cursor: pointer;
-margin-top: 10%;
 }
 
-.like-count {
-display: flex;
-align-items: center;
-font-size: 1rem;
-margin-left: 10px;
-}
-
-.comment-button{
-
-display: flex;
-align-items: center;
-justify-content: center;
-color: #dc3545;
-font-size: 2.0rem;
-cursor: pointer;
-
-}
-*/
 
 /* font for username on welcome page */
 .username-font {

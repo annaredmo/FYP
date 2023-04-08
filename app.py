@@ -3,8 +3,8 @@ from flask_mysqldb import MySQL
 from MySQLdb import OperationalError, ProgrammingError
 
 from wtforms import Form, StringField, PasswordField, validators
-# from passlib.hash import sha256_crypt
 from functools import wraps
+import bcrypt
 
 import os
 import requests
@@ -15,11 +15,15 @@ import imdb
 import pickle
 import ast
 
-# import logging
-# logging.basicConfig(filename='app.log', level=logging.ERROR)
+import logging
+log_to_file = False  # set this to True if you want to log to a file when moving to AWS:-)
+
+if log_to_file:
+    logging.basicConfig(filename='app.log', level=logging.ERROR)
+else:
+    logging.basicConfig(level=logging.ERROR)
 
 ia = imdb.IMDb()
-
 app = Flask(__name__)
 
 #mysqldump -u root -p --databases annas_db > annas_db.sql  -> change db name in file/filename - mysql -u root -p < annas_db2.sql
@@ -92,7 +96,7 @@ def getSpotifyObject():
 @app.route('/auth/callback')
 def callback():
     try:
-        print('callback: auth url',session['username'])
+        logging.info('callback: auth url',session['username'])
         username=session['username']
         oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI, scope=scope,username=username)
 
@@ -111,6 +115,7 @@ def callback():
             return redirect(url_for('welcome'))  # send user to welcome
         else:
             #registering - spotify looks ok
+
             dbCreateAccount(session['username'], session['email'], session['password'], spotifyId)
             clearUser() # want user to log inv
             flash("Successfully created new user: "+ session['username'] , 'success')
@@ -213,8 +218,7 @@ def login():
 
         password = data['password']
         userId = data['id']
-        if password and userId:  # if a user is found - check password - TODO do both checks in if
-            # TODO passwords are not being compared and letting any password to log in
+        if password and userId:  # if a user is found - check password -
             if password_entered == password:  # todo taking out encryption - but good for security	#sha256_crypt.verify(password_candidate,password):
                 session['username'] = username_entered  # session username is username inputted
                 session['id'] = userId  # session id is the id from the db
@@ -245,6 +249,10 @@ def clearUser():
 @is_logged_in
 def delete_user():
     if dbDeleteUser(session['id']):
+
+        cacheFile =  ".cache-" + session['username'] # delete the spotify cache file
+        if os.path.exists(cacheFile):
+            os.remove(cacheFile)
         clearUser()
         # Don't delete their playlists on spotify - i am soo nice
         flash("Your account has been deleted, until next time friend <3", 'danger')
@@ -286,16 +294,16 @@ def create_playlist():
             # if WIFI down imdb causes a dump even though error is caught - checking internet first via spotify - doesnt dump!
             if not getSpotifyObject():
                 return redirect(url_for('welcome'))
-            movieList = ia.search_movie(playlist)  # TODO - if wifo down - crashes - error not caught
+            movieList = ia.search_movie(playlist)
             if not movieList:
                 flash("No movie match found", 'info')
                 return render_template('add_playlist.html',
-                                       form=form)  # TODO: form=form?? does this work pen function in add_playlist.html
+                                       form=form)
 
             myMovieList = []
             for movie in movieList:
                 if not movie.data.get('full-size cover url'):
-                    movie['full-size cover url'] = '.\\static\\images\\noimage.png'  # todo:anna: new image for no omg
+                    movie['full-size cover url'] = '.\\static\\images\\noimage.png'
                 myMovieList.append([movie.movieID, movie.data['title'], movie.get('full-size cover url')])
             return render_template('pickMovie.html', movieList=myMovieList)
 
@@ -335,10 +343,7 @@ def pickMovie():
                 albumId=''
                 #print("pick movie ", theMovieName)
                 results = sp.search(theMovieName + ' soundtrack', 10, 0, type="album")
-                #TODO - do more check to see its the best match spotify a bit flaky
                 if results:
-                    for x in results['albums']['items']:
-                        print('album names', x['name'],x)
                     albumId = results['albums']['items'][0]['id']
                     #print('album id', albumId)
                     lst = sp.album_tracks(albumId)
@@ -380,7 +385,6 @@ def delete_playlist(playlist):
         else:
             flash("Spotipy error:" + str(e), 'danger')
     return redirect(url_for('dashboard'))
-
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -501,7 +505,7 @@ def getSongData():
 # Get 2 suggestons for each track in official soundtrack
 @app.route('/getRecommendedTracks', methods=['GET', 'POST'])
 def getRecommendedTracks():
-    num_recommendations = 3 #brings back 2
+    num_recommendations = 3
     try:
         data = request.get_json()
         table_data = data['table_data']
@@ -520,7 +524,6 @@ def getRecommendedTracks():
                     #Get 2 suggestions for each song
                     reccId = sp.recommendations(seed_tracks=[id], limit=num_recommendations)
                     for i in reccId['tracks']:
-                        #print(i['name'])
                         if i['id'] not in table_data:
                             trackList.append([i['name'], i['id']])  # list of lists
             #print(trackList)
@@ -669,8 +672,6 @@ def update_likes():
     table_data = data['table_data']
     likes = table_data.get('likes')
     spotifyLink = table_data.get('spotifyLink')
-
-    #print('supdate_likes: ', likes, spotifyLink, table_data)
     if likes and spotifyLink:
         dbSetLikes(likes, spotifyLink)
 
@@ -906,8 +907,6 @@ def check_and_create_database():
 
 
 if __name__ == '__main__':
-    # check_and_create_database()
-    # db_create()
 
     app.config['SECRET_KEY'] = 'mysecret123456annaredmo'
     app.run()  # set the application to run in debug mode to get better feedback about errors.

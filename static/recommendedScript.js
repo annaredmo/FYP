@@ -1,6 +1,5 @@
 function removeTrack(pressedRow) {
     /* This method will delete a row */
-    console.log("removeTrack: ",pressedRow.parentNode.parentNode);
     pressedRow.parentNode.parentNode.remove();
     }
 
@@ -31,7 +30,6 @@ function transferTrack(pressedRow) {
       removeCell.classList.add('move-cell');
       removeCell.appendChild(removeButton);
       pressedRow.parentNode.parentNode.remove();
-      console.log("table = ",playlistTable);
 }
 
 // loading picked tracks into list - they may or may not be saved
@@ -50,7 +48,6 @@ function get_playlist_ids()
             }
         }
     }
-    console.log('tracks',tableData);
     return tableData;
 }
 
@@ -58,30 +55,24 @@ function get_playlist_ids()
 function officialSoundtrack() {
   // Get the ids from the picked playlist so there is no repeat
   const tableData = get_playlist_ids();
-  console.log('officialSoundtrack',tableData);
-
-  fetchAndHandleResponse('/getSongData', {table_data: tableData });
+  fetchAndHandleResponse('/getSongData', {table_data: tableData }, "Pick From Official PlayTrack...");
 
 }
 //Get recommended tracks from spotify based on official playlist
 function getRecommendedracks() {
   // Get the ids from the picked playlist so there is no repeat
   const tableData = get_playlist_ids();
-  console.log('officialSoundtrack',tableData);
-
-  fetchAndHandleResponse('/getRecommendedTracks', {table_data: tableData });
+  fetchAndHandleResponse('/getRecommendedTracks', {table_data: tableData }, "Pick From Recommended Tracks...");
 
 }
 
 function searchTracks() {
   const tableData = get_playlist_ids();
   const songName = document.getElementById("song-name").value;
-  console.log(songName);
-
-  fetchAndHandleResponse('/searchForMatchingTracks', { song_name: songName, table_data: tableData });
+  fetchAndHandleResponse('/searchForMatchingTracks', { song_name: songName, table_data: tableData }, "Pick from Searched Tracks...");
 }
 
-function fetchAndHandleResponse(url, data) {
+function fetchAndHandleResponse(url, data, title) {
   fetch(url, {
     method: 'POST',
     headers: {
@@ -97,7 +88,7 @@ function fetchAndHandleResponse(url, data) {
   })
   .then(data => {
     const tbody = document.getElementById("tbodyrec");
-    tbody.innerHTML = '<tr><th class="table-border-none">Recommended tracks for your Movie </th></tr>';
+    tbody.innerHTML = '<tr><th class="table-border-none">'+title+'</th></tr>';
     for (var i = 0; i < data.length; i++) {
       var row = tbody.insertRow();
       var cell1 = row.insertCell(0);
@@ -110,7 +101,6 @@ function fetchAndHandleResponse(url, data) {
     }
   })
   .catch(error => {
-    console.error('Error: connection down', error);
     window.location.href = "{{ url_for('dashboard') }}";
 
   });
@@ -118,7 +108,6 @@ function fetchAndHandleResponse(url, data) {
 
 async function saveTracks() {
   const tableData = get_playlist_ids();
-  console.log('Save tracks', tableData);
 
   const response = await fetch('/updateTracks', {
     method: 'POST',
