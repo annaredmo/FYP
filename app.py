@@ -23,7 +23,7 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
-app.secret_key = 'fantrax123'
+app.secret_key = 'fantrax1234'
 
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
@@ -34,7 +34,7 @@ mysql = MySQL(app)
 
 #Spotipy setup
 clientID = os.environ.get('FanTraxClientID', '6c68091ecfa44fe9b55ff6bcc5d81c97')
-clientSecret = os.environ.get('FanTraxClientSecret', '36582bf60f224dc3a1035a0335700bef')
+clientSecret = os.environ.get('FanTraxClientSecret', '9e4669020c0248359ab81bc44376c348')
 redirectURI = os.environ.get('FanTraxRedirectURI', "http://localhost:5000/auth/callback")
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
 
@@ -50,14 +50,11 @@ def spotipyConnection():
 
             try:
                 if oauth_object.is_token_expired(oauth_object.get_cached_token()):
-                    print('spotipyConnection: Access token has expired')
-
                     new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token())
                     oauth_object.access_token = new_token['access_token']
                     session['spotifyOathObject'] = pickle.dumps(oauth_object)
                 spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
                 spotifyId = spotifyObject.me()['id']
-                print('spotipyConnection: In spotifyid in session',spotifyId, session['username'])
 
             except spotipy.SpotifyException as e:
                 print("spotipyConnection: SpotifyException", e)
@@ -95,7 +92,6 @@ def getSpotifyObject():
 @app.route('/auth/callback')
 def callback():
     try:
-        print('callback: auth url', session['username']) #TODO DELETE
         username=session['username']
         oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI, scope=scope,username=username)
 

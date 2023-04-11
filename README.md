@@ -26,7 +26,7 @@
 	- cd into FanTrax
 
 # INSTALL PACKAGES
-	- pip install -r requirements.txt
+	- pip install --use-pep517 -r requirements.txt
 
 # INSTALL MYSQL DATABASE
 	- python create_database.py (make sure you set env variables OR edit script and set manually) 
@@ -45,7 +45,10 @@
     - If you do not have a Spotify account - this account and password are available
         until August 2023 username:annaredmo@gmail.com password:fyppassword
 
-
 # POSSIBLE ISSUES
     - multiple FanTrax servers running on the one machine could cause issues. As session data persists in 
         memory
+    - occasionaly if the internet is slow this error will be seen outputed from the server. It
+        does not effect the functionality - which works as expected
+        ERROR:werkzeug:127.0.0.1 - - [11/Apr/2023 16:36:29] Request timed out: TimeoutError('timed out')
+    - occacional issues with login again when internet is slow 

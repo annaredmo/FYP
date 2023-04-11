@@ -32,7 +32,7 @@ async function submitComment() {
   }
 }
 
-  async function incrementLikes() {
+ async function incrementLikes() {
     var countEl = document.getElementById('like-count');
     var count = parseInt(countEl.innerHTML);
     countEl.innerHTML = count + 1;
@@ -50,9 +50,7 @@ async function submitComment() {
     },
     body: JSON.stringify({table_data: data})
   });
-  if (response.ok) {
-    console.log('Table data was successfully sent to the server');
-  } else {
+  if (!response.ok) {
     console.error('Network response was not ok');
   }
-  }
+ }

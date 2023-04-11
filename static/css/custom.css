@@ -12,8 +12,7 @@
 html {
   font-family: sans-serif;
   -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-
+  -ms-text-size-adjust: 100%;
 }
 
 html,body{height: 100vh;
@@ -23,26 +22,28 @@ body{
   background-image: url('background.png');
   background-size: cover;
   color: var(--blockbuster-yellow);
-  }
+}
 
 * {
   box-sizing: border-box;
 }
 
 a.nav-link  {
-      color: #ffff1a;
-      font-size: 1.25rem;
-    }
+  color: #ffff1a;
+  font-size: 1.25rem;
+}
 
 .navbar-toggler-icon {
    border-color: #f3cb06;
    background-color:  var(--blockbuster-blue);
-    color:  var(--blockbuster-yellow);
-  }
+   color:  var(--blockbuster-yellow);
+ }
+
 .table-thick-border{
     border: 5px solid;
     color: var(--blockbuster-yellow);
-    }
+ }
+
  .table-dark{
     background-color: rgba(0, 0, 0, 0.2);
     --bs-table-bg:
@@ -65,22 +66,19 @@ a.nav-link  {
 
 tbody, td, tfoot,thead, tr {
     border-style: none;
-        color: var(--blockbuster-yellow);
-        font-size: small; //
-
+    color: var(--blockbuster-yellow);
+    font-size: small;
 }
 th {
-        border-style: none;
-        border-bottom: 10px!important;
+    border-style: none;
+    border-bottom: 10px!important;
     border-color: var(--blockbuster-yellow);
-
-    }
+}
 
 .rec-scr-table{
     border: 3px solid;
     color: var(--blockbuster-yellow);
     //overflow: hidden; overflow-y: auto; -ms-overflow-style: none ;
-    //height: 40vh; /* careful */
 }
 
 .playlist-scr-table{
@@ -120,10 +118,10 @@ h1 {
     color: var(--blockbuster-yellow);
     font-size: 3rem;
 }
+
 p{
     color: var(--blockbuster-yellow);
 }
-#rcorners2 {}
 
 h3 {
     //color: var(--blockbuster-yellow);
@@ -157,8 +155,6 @@ h3.example{
   }
 }
 
-
-
 .move-cell {
   vertical-align: middle;
   text-align: center;
@@ -177,7 +173,6 @@ h3.example{
   top: 25%;
   width: 100%;
   max-height: 40vh;
-
 }
 
 .thumbnail {
@@ -196,7 +191,6 @@ h3.example{
   width: 100%;
   object-fit: cover;
   object-position: center top;
-
 }
 
 .btn-lg{
@@ -235,36 +229,29 @@ width:50%
 
 /* PLaylist Page  take out 1st and 2nd line and it takes up whole width*/
 .container-playlist {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-height: calc(100% - 100px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100% - 100px);
 
 }
-/*
-.container-playlist-2 {
-align-items: center;
-justify-content: center;
-
-}*/
 
 .playlist-img {
-width: 25vw;
+    width: 22vw;
 }
 
 .like-button {
-font-size: 2.0rem;
-cursor: pointer;
-padding-start
+    font-size: 2.0rem;
+    cursor: pointer;
+    padding-start
 }
 
 .like-count {
-font-size: 1rem;
-margin-left: 10px;
+    font-size: 1rem;
+    margin-left: 10px;
 }
 
-/* ALL MESSED UP - NO CMT_BUTTON*/
 .comment-button{
   vertical-align: middle;
   text-align: middle;
@@ -338,7 +325,7 @@ margin-left: 10px;
 
 /* Style the comment textarea */
 textarea {
- width: 100%;
+  width: 100%;
   height: 100%;
 }
 
@@ -350,7 +337,6 @@ textarea {
 
 }
 .commentBox{
-      background-image: url("paper.gif");
   background-color: #cccccc;
 }
 /*==================Fonts==================*/
