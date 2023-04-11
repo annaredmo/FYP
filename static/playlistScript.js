@@ -23,7 +23,7 @@ async function submitComment() {
     var tableBody = document.getElementById("commentlist");
     var newRow = document.createElement("tr");
     var newCell = document.createElement("td");
-    newCell.textContent = comment+" by "+username; /* TODO doesnt have font */
+    newCell.textContent = comment+" by "+username;
     newRow.appendChild(newCell);
     tableBody.appendChild(newRow);
 

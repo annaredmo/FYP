@@ -40,7 +40,7 @@ try:
     dir = os.path.dirname(os.path.abspath(__file__))
     sqlFile = os.path.join(dir, "fan_tracks2.sql")
 
-    subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks2', '<', sqlFile], shell=True)
+    subprocess.run(['mysql', '-u', user, '-p' + password, 'fan_tracks', '<', sqlFile], shell=True)
     print("==================== CREATED DATABASE - Please run - flask run (or python app.py) =====================")
  
 except Exception as e:

@@ -1,10 +1,9 @@
-from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
+from flask import Flask, render_template, flash, redirect, url_for, session, request
 from flask_mysqldb import MySQL
 from MySQLdb import OperationalError, ProgrammingError
 
 from wtforms import Form, StringField, PasswordField, validators
 from functools import wraps
-import bcrypt
 
 import os
 import requests
@@ -19,29 +18,28 @@ import logging
 log_to_file = False  # set this to True if you want to log to a file when moving to AWS:-)
 
 if log_to_file:
-    logging.basicConfig(filename='app.log', level=logging.ERROR)
+    logging.basicConfig(filename='app.log', level=logging.INFO)
 else:
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
 
-ia = imdb.IMDb()
 app = Flask(__name__)
+app.secret_key = 'fantrax123'
 
-#mysqldump -u root -p --databases annas_db > annas_db.sql  -> change db name in file/filename - mysql -u root -p < annas_db2.sql
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', 'password')
 app.config['MYSQL_DB'] = 'fan_tracks'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-app.secret_key = 'mysecret123456annaredmo'
-
-
 mysql = MySQL(app)
 
 #Spotipy setup
-clientID =  os.environ.get('FanTraxClientID','6c68091ecfa44fe9b55ff6bcc5d81c97')
-clientSecret = os.environ.get('FanTraxClientSecret','36582bf60f224dc3a1035a0335700bef')
-redirectURI = os.environ.get('FanTraxRedirectURI',"http://localhost:5000/auth/callback")
+clientID = os.environ.get('FanTraxClientID', '6c68091ecfa44fe9b55ff6bcc5d81c97')
+clientSecret = os.environ.get('FanTraxClientSecret', '36582bf60f224dc3a1035a0335700bef')
+redirectURI = os.environ.get('FanTraxRedirectURI', "http://localhost:5000/auth/callback")
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
+
+ia = imdb.IMDb()
+
 
 def spotipyConnection():
     spotifyObject, spotifyId = 0, 0
@@ -54,7 +52,7 @@ def spotipyConnection():
                 if oauth_object.is_token_expired(oauth_object.get_cached_token()):
                     print('spotipyConnection: Access token has expired')
 
-                    new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token()) #
+                    new_token = oauth_object.refresh_access_token(oauth_object.get_refresh_token())
                     oauth_object.access_token = new_token['access_token']
                     session['spotifyOathObject'] = pickle.dumps(oauth_object)
                 spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
@@ -75,7 +73,6 @@ def spotipyConnection():
                 # Error cache file got deleted - user needs to re-authorise
                 print('Error spotipyConnection: cache file got deleted - user needs to re-authorise ', e)
                 flash("spotipyConnection: Please log in again to reauthorise with Spotify", 'danger')
-                #todo clearuser and redirect to login??
 
             return spotifyObject, spotifyId
         else:
@@ -87,16 +84,18 @@ def spotipyConnection():
     return 0,0
 
 #Just return the object - dont need the id
+
 def getSpotifyObject():
     sp, spId = spotipyConnection()
     return sp
+
 
 #Spotify calls this function when the user autheticates - it stores the auth object
 #And creates user in the database
 @app.route('/auth/callback')
 def callback():
     try:
-        logging.info('callback: auth url',session['username'])
+        print('callback: auth url', session['username']) #TODO DELETE
         username=session['username']
         oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI, scope=scope,username=username)
 
@@ -115,9 +114,8 @@ def callback():
             return redirect(url_for('welcome'))  # send user to welcome
         else:
             #registering - spotify looks ok
-
             dbCreateAccount(session['username'], session['email'], session['password'], spotifyId)
-            clearUser() # want user to log inv
+            clearUser()
             flash("Successfully created new user: "+ session['username'] , 'success')
             return redirect(url_for('login'))  # send user to welcome
 
@@ -219,7 +217,7 @@ def login():
         password = data['password']
         userId = data['id']
         if password and userId:  # if a user is found - check password -
-            if password_entered == password:  # todo taking out encryption - but good for security	#sha256_crypt.verify(password_candidate,password):
+            if password_entered == password:
                 session['username'] = username_entered  # session username is username inputted
                 session['id'] = userId  # session id is the id from the db
                 return connectToSpotify(username_entered)
@@ -277,9 +275,6 @@ def dashboard():
     playLists = dbGetUserPlaylists(session['id'])
     return render_template('userDashboard.html', playlists=playLists)  # sends in the playlist we just got from database
 
-
-# =====================================================================================
-
 class make_playlist(Form):
     title = StringField('Name', [validators.Length(min=1, max=25)])
 
@@ -287,14 +282,13 @@ class make_playlist(Form):
 @app.route('/create_playlist', methods=['GET', 'POST'])
 @is_logged_in
 def create_playlist():
-    form = make_playlist(request.form)  # make the playlist using the form element
-    if request.method == 'POST' and form.validate():  # if the request is POST
-        playlist = form.title.data  # get the data entered in the form and use that as the name for the playlist
+    form = make_playlist(request.form)
+    if request.method == 'POST' and form.validate():
+        movie = form.title.data  # get the data entered in the form and use that as the name for the playlist
         try:
-            # if WIFI down imdb causes a dump even though error is caught - checking internet first via spotify - doesnt dump!
-            if not getSpotifyObject():
+            if not getSpotifyObject(): #no connection to spotify
                 return redirect(url_for('welcome'))
-            movieList = ia.search_movie(playlist)
+            movieList = ia.search_movie(movie)
             if not movieList:
                 flash("No movie match found", 'info')
                 return render_template('add_playlist.html',
@@ -325,11 +319,8 @@ def pickMovie():
     movie_json = request.form['movie']
     movie = ast.literal_eval(movie_json)
     if movie:
-        #print("MOVIE =", movie)
         theMovieName = movie[1]
         poster = movie[2]
-        albumId = ''
-
         try:
             sp = getSpotifyObject()
             if not sp:
@@ -341,11 +332,9 @@ def pickMovie():
                 # Get Official Playlist
                 trackList = []
                 albumId=''
-                #print("pick movie ", theMovieName)
                 results = sp.search(theMovieName + ' soundtrack', 10, 0, type="album")
                 if results:
                     albumId = results['albums']['items'][0]['id']
-                    #print('album id', albumId)
                     lst = sp.album_tracks(albumId)
                     for j in lst['items']:  # make sure track is not already picked
                         trackList.append([j['name'], j['id']])  # list of lists
@@ -355,7 +344,6 @@ def pickMovie():
             flash("Error Creating a Playlist in Spotify", 'danger')
             print('pickMovie: ', e)
             return redirect(url_for('welcome'))
-        # TOdo flash or mrssage ??
     else:
         flash("No movie picked", 'danger')
     return redirect(url_for('dashboard'))
@@ -390,17 +378,16 @@ def delete_playlist(playlist):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
-    #print('in register')
     try:
         if request.method == 'POST' and form.validate():
             email = form.email.data
             username = form.username.data
-            password = form.password.data  # sha256_crypt.encrypt(str(form.password.data))   #todo encrypt password
+            password = form.password.data
             if dbCheckNameOrEmailExists(username,email):    #if it does exist
                 return render_template('registrationPage.html', form=form)  # open this function in the rgisterpage
             else:
-                session['username'] = username  # session username is username inputted
-                session['Registering'] = True  # will call createdb
+                session['username'] = username
+                session['Registering'] = True
                 session['email'] = email
                 session['password'] = password
                 return connectToSpotify(username)
@@ -413,6 +400,81 @@ def register():
     return render_template('registrationPage.html', form=form)  # open this function in the rgisterpage
 
 
+# Recommended page
+@app.route('/recomended', methods=['GET', 'POST'])
+@is_logged_in
+def recomended():
+    try:
+        if request.method == 'GET':
+            pass
+        playListName = request.form.get("playlistTitle")
+        spotifyLink = request.form.get("spotifylink ")
+        tracks = []
+        if playListName and spotifyLink:
+            session['playListName'] = playListName
+            spotifyObject = getSpotifyObject()  # spotify object assignment
+            # get songs in your playlist and send them to screen
+            lst = spotifyObject.playlist_items(spotifyLink)
+            for j in lst['items']:
+                tracks.append([j['track']['name'], j['track']['id']])
+
+    except Exception as e:
+        # internet error caught in spotifyconnect - redirect here
+        print("Error recomended: ", e)
+        flash("Error: Couldn't get playlist details from Spotify - try loging in again", "danger")
+        return redirect(url_for('dashboard'))
+
+    return render_template('recomended.html', playListTracks=tracks)
+
+
+# Get data for friends playlist - called from welcome screen
+@app.route("/playlist", methods=["POST"])
+@is_logged_in
+def playlist():
+    try:
+        spotifylink = request.form.get("spotifylink")
+        playList = dbGetPlaylist(spotifylink)
+        if not playList:
+            flash("Playlist no longer exists", 'danger')
+            return redirect(url_for('welcome'))
+        username = dbGetUserName(playList['userid'])
+        playList['username'] = username
+        tracks = []
+        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
+
+        # get songs in your playlist and send them to screen
+        lst = spotifyObject.playlist_items(spotifylink)
+        for j in lst['items']:
+            tracks.append([j['track']['name'], j['track']['id']])
+        playList['tracks'] = tracks
+
+        commentlist = []
+        comments = dbGetComments(spotifylink)
+        if comments:
+            for j in comments:
+                commentlist.append([j['comment'], j['username']])
+            playList['comments'] = commentlist
+
+        return render_template("playlist.html", playList=playList)
+    except:
+        print('Playlist Error: ')
+        return redirect(url_for('welcome'))
+
+
+# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
+@app.route('/')
+@is_logged_in
+def welcome():
+    try:
+        friendsPlaylist = dbGetFriends(session['id'])
+        return render_template('welcome.html',
+                               playlists=friendsPlaylist)  # sends in the playlist just got from database
+    except Exception as e:
+        print("dbGetFriends Error: ", e)
+        flash("Database error getting friends playlists :" + str(e), 'danger')
+        return render_template('welcome.html', playlists=[])
+
+
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
@@ -421,6 +483,10 @@ def contact():
 @app.route('/movie')
 def movie():
     return render_template('movie.html')
+
+########################################################################################################################
+# Javascript callbacks
+########################################################################################################################
 
 #Save the tracks picked by the user for their playlist. Update Spotify playlist
 @app.route('/updateTracks', methods=['POST'])
@@ -432,7 +498,7 @@ def updateTracks():
 
         spotifyPlayListId=dbGetSpotifyLink(session['id'], session['playListName']) #Get the spotifyLink for the playlist
         if spotifyPlayListId:
-            getSpotifyObject().playlist_replace_items(spotifyPlayListId, table_data) #todo - doesn't fail if playlist deleted
+            getSpotifyObject().playlist_replace_items(spotifyPlayListId, table_data)
             return 'Table data received and processed successfully'
 
     except Exception as e:
@@ -450,11 +516,9 @@ def searchForMatchingTracks():
         searchName = request.json.get('song_name')
         table_data = request.json.get('table_data')
 
-        # spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
         results = getSpotifyObject().search(searchName, 10, 0, "track")
         songs_dict = results['tracks']
         song_items = songs_dict['items']
-        song = song_items[0]['external_urls']['spotify']
 
         lst = results['tracks']
         trackList = []
@@ -462,7 +526,6 @@ def searchForMatchingTracks():
         for j in lst['items']:
             # only add to list if not already in not in playlist
             if j['id'] not in table_data:
-                #print(j['name'])
                 trackList.append([j['name'], j['id']])  # list of lists
         return jsonify(trackList)
     except Exception as e:
@@ -483,14 +546,12 @@ def getSongData():
         sp = getSpotifyObject()
         if sp:
             soundTrack=session['playListName']
-            #print("SEarch getsongdata ", session['playListName'],soundTrack)
             album_id=dbGetOfficialSoundtrack(soundTrack, session['id'])
             if album_id:
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     if j['id'] not in table_data:
                         trackList.append([j['name'], j['id']])  # list of lists
-                #print(trackList)
             return jsonify(trackList)
     except Exception as e:
         print('getSongData: ', e)
@@ -499,7 +560,6 @@ def getSongData():
     response = jsonify({'error': 'An error occurred in getSongData: '})
     response.status_code = 500
     return response
-
 
 
 # Get 2 suggestons for each track in official soundtrack
@@ -513,7 +573,6 @@ def getRecommendedTracks():
         sp = getSpotifyObject()
         if sp:
             soundTrack=session['playListName']
-            #print("SEarch getsongdata ", session['playListName'],soundTrack)
             results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
             if results:
                 album_id = results['albums']['items'][0]['id']
@@ -526,7 +585,6 @@ def getRecommendedTracks():
                     for i in reccId['tracks']:
                         if i['id'] not in table_data:
                             trackList.append([i['name'], i['id']])  # list of lists
-            #print(trackList)
             return jsonify(trackList)
     except Exception as e:
         print('getSongData: ', e)
@@ -536,36 +594,22 @@ def getRecommendedTracks():
     response.status_code = 500
     return response
 
-# Add tracks to playlist
-@app.route('/recomended', methods=['GET', 'POST'])
-@is_logged_in
-def recomended():
-    try:
-        if request.method == 'GET':  # if the request is POST
-            pass
-        playListName = request.form.get("playlistTitle")
-        spotifyLink = request.form.get("spotifylink ")
-        tracks = []
-        if playListName and spotifyLink:
-            #print('rec ', playListName, spotifyLink)
-            session['playListName'] = playListName
-            spotifyObject = getSpotifyObject()  # spotify object assignment
-            # get songs in your playlist and send them to screen
-            lst = spotifyObject.playlist_items(spotifyLink)
-            for j in lst['items']:
-                tracks.append([j['track']['name'], j['track']['id']])
+@app.route('/update_comments', methods=['POST'])
+def update_comments():
+    data = request.get_json()
+    table_data = data['table_data']
+    comment = table_data.get('comment')
+    spotifyLink = table_data.get('spotifyLink')
+    username = table_data.get('username')
 
-    except Exception as e:
-        # internet error caught in spotifyconnect - redirect here
-        print("Error recomended: ", e)
-        flash("Error: Couldn't get playlist details from Spotify - try loggin in again", "danger")
-        return redirect(url_for('dashboard'))
+    if comment and username and spotifyLink:
+        dbAddComment(comment, username, spotifyLink)
 
-    return render_template('recomended.html', playListTracks=tracks)
+    return 'Table data received and processed successfully'
 
-# ======================================================================================================
+########################################################################################################################
 # Database functions
-# #######################################################################################################
+########################################################################################################################
 
 def dbGetSpotifyLink(userId, playlistName):
     try:
@@ -646,7 +690,6 @@ def dbCreatePlaylist(userId, theMovieName, playListId, poster, albumId):
                 flash("Playlist already exists", 'info')
                 return False
             else:
-                #todo UPDATE table_name SET column_name = NULL;
                 cursor.execute("INSERT INTO playlist(userid,playlisttitle,spotifylink,imgLink,officialplaylist) VALUES (%s,%s,%s,%s, %s)",
                                (userId, theMovieName, playListId, poster, albumId))  # getting the id from the link
                 mysql.connection.commit()  # comming connection to sql
@@ -686,71 +729,6 @@ def dbAddComment(comment, username, spotifyLink):
     except Exception as e:
         print('update_comments: ', e)
 
-@app.route('/update_comments', methods=['POST'])
-def update_comments():
-    data = request.get_json()
-    table_data = data['table_data']
-    comment = table_data.get('comment')
-    spotifyLink = table_data.get('spotifyLink')
-    username = table_data.get('username')
-
-    if comment and username and spotifyLink:
-        dbAddComment(comment, username, spotifyLink)
-
-    return 'Table data received and processed successfully'
-
-
-# Get data for friends playlist - called from welcome screen
-@app.route("/playlist", methods=["POST"])
-@is_logged_in
-def playlist():
-    try:
-        spotifylink = request.form.get("spotifylink")
-        playList = dbGetPlaylist(spotifylink)
-        if not playList:
-            flash("Playlist no longer exists", 'danger')
-            return redirect(url_for('welcome'))
-        username = dbGetUserName(playList['userid'])
-        playList['username'] = username
-        tracks = []
-        spotifyObject, spotifyId = spotipyConnection()  # spotify object assignment
-
-        # get songs in your playlist and send them to screen
-        lst = spotifyObject.playlist_items(spotifylink)
-        for j in lst['items']:
-            tracks.append([j['track']['name'], j['track']['id']])
-        playList['tracks'] = tracks
-
-        commentlist = []
-        comments = dbGetComments(spotifylink)
-        if comments:
-            for j in comments:
-                commentlist.append([j['comment'], j['username']])
-            playList['comments'] = commentlist
-
-        return render_template("playlist.html", playList=playList)
-    except:
-        print('Playlist Error: ')
-        return redirect(url_for('welcome'))
-
-
-
-
-# Default route of the server - if someone types http://127.0.0.1:5000/ into browser
-@app.route('/')  # 2 ways to get in - via click on button OR from login straight
-@is_logged_in  # @ signifys a a decerator which is a function that extends another function
-def welcome():
-    try:
-        #db_create()
-
-        friendsPlaylist = dbGetFriends(session['id'])
-        return render_template('welcome.html',
-                               playlists=friendsPlaylist)  # sends in the playlist we just got from database
-    except Exception as e:
-        print("dbGetFriends Error: ", e)
-        flash("Database error getting friends playlists :" + str(e), 'danger')
-        return render_template('welcome.html',
-                               playlists=[])  # view function is defined to handle requests to the home page
 
 
 # Delete user and their playlists from DB
@@ -845,7 +823,6 @@ def dbGetUserData(username):
 def dbGetUserPlaylists(userId):
     try:
         with mysql.connection.cursor() as cursor:
-            # TODO: change playlist to use spotifylink as key
             result = cursor.execute("SELECT playlisttitle,imgLink,spotifylink from playlist WHERE userid = %s",
                                     (userId,))
             if result:
@@ -875,39 +852,8 @@ def dbGetOfficialSoundtrack(movieName, userId):
 
     return False
 
-def db_create():
-    cursor = mysql.connection.cursor()
-    cursor.execute("SHOW DATABASES")
-    databases = cursor.fetchall()
-
-
-def check_and_create_database():
-    try:
-        # check if the database exists
-        cursor = mysql.connection.cursor()
-        cursor.execute("SHOW DATABASES")
-        databases = cursor.fetchall()
-        database_exists = False
-        for database in databases:
-            if database[0] == app.config['MYSQL_DB']:
-                database_exists = True
-
-        # if the database does not exist, create it
-        if not database_exists:
-            cursor.execute(f"CREATE DATABASE {app.config['MYSQL_DB']}")
-            print("Database created successfully")
-        else:
-            print("Database already exists")
-
-        cursor.close()
-    except Exception as e:
-        print("check_and_create_database Error: ", e)
-
-    # todo print statements still log in production mode - need log file?
-
 
 if __name__ == '__main__':
 
-    app.config['SECRET_KEY'] = 'mysecret123456annaredmo'
-    app.run()  # set the application to run in debug mode to get better feedback about errors.
+    app.run()
 

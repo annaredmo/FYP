@@ -7,25 +7,23 @@
 	<div class="banner">
     <img class="banner-image" src="static/images/blockbusterBanner.jpg" alt="Banner Image">
 	</div>
-
 <div class="jumbotran text-center">
 	<h1 class="lead">Popular with Friends</h1>
 </div>
-
   <div class="container">
     <div class="row">
       {% for movie in playlists %}
-      <div class="col-sm-2 mb-2">
-        <div class="thumbnail">
-          <form action="/playlist" method="POST">
-            <input type="hidden" name="spotifylink" value="{{ movie.spotifylink }}">
-            <button type="submit"><img src="{{ movie.imgLink }}" alt="{{ movie.title }}"></button>
-          </form>
-            <div class="caption">
-            <h6 class="welcome-playlist-title">{{ movie.playlisttitle }} by <span class="username-font">{{ movie.username }}</span></h6>
-            </div>
+        <div class="col-sm-2 mb-2">
+          <div class="thumbnail">
+            <form action="/playlist" method="POST">
+              <input type="hidden" name="spotifylink" value="{{ movie.spotifylink }}">
+              <button type="submit"><img src="{{ movie.imgLink }}" alt="{{ movie.title }}"></button>
+            </form>
+              <div class="caption">
+              <h6 class="welcome-playlist-title">{{ movie.playlisttitle }} by <span class="username-font">{{ movie.username }}</span></h6>
+              </div>
+          </div>
         </div>
-      </div>
       {% endfor %}
     </div>
   </div>

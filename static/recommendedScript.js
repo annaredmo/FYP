@@ -55,7 +55,7 @@ function get_playlist_ids()
 function officialSoundtrack() {
   // Get the ids from the picked playlist so there is no repeat
   const tableData = get_playlist_ids();
-  fetchAndHandleResponse('/getSongData', {table_data: tableData }, "Pick From Official PlayTrack...");
+  fetchAndHandleResponse('/getSongData', {table_data: tableData }, "Pick From Official SoundTrack...");
 
 }
 //Get recommended tracks from spotify based on official playlist
