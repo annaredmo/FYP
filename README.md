@@ -9,7 +9,7 @@
 	- MySQL - with database create permissions
 	- Python 10 
 	- Internet
-	- Spotify Account
+	- Spotify Account (or see below)
 	- Chrome/Edge
 	
 # SETUP
@@ -19,7 +19,7 @@
 	- set the following environment variables
 		- MYSQL_USER <username>
 		- MYSQL_PASSWORD <password>
-        OR change the values in the app.py
+        OR change the values in the app.py and create_database.py
 		
 # INSTALL APPLICATION
 	- unzip FanTrax.zip into you folder (venv)
@@ -51,4 +51,4 @@
     - occasionaly if the internet is slow this error will be seen outputed from the server. It
         does not effect the functionality - which works as expected
         ERROR:werkzeug:127.0.0.1 - - [11/Apr/2023 16:36:29] Request timed out: TimeoutError('timed out')
-    - occacional issues with login again when internet is slow 
+    - occacional issues with login - again when internet is slow 

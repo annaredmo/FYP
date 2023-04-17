@@ -1,3 +1,7 @@
+#                          Anna Redmond
+#                            119454142
+#                 FanTrax is an application that allows a user to create their own fanmade hypotheitical soundtracl for a movie of their choice
+
 from flask import Flask, render_template, flash, redirect, url_for, session, request
 from flask_mysqldb import MySQL
 from MySQLdb import OperationalError, ProgrammingError
@@ -40,7 +44,7 @@ scope = 'playlist-read-private playlist-modify-private playlist-modify-public ug
 
 ia = imdb.IMDb()
 
-
+#Connects to Spotify
 def spotipyConnection():
     spotifyObject, spotifyId = 0, 0
     try:
@@ -82,6 +86,7 @@ def spotipyConnection():
 
 #Just return the object - dont need the id
 
+
 def getSpotifyObject():
     sp, spId = spotipyConnection()
     return sp
@@ -122,6 +127,7 @@ def callback():
 
     return redirect(url_for('login'))  # send ser to welcome
 
+
 #Test spotify is available
 def validInternetConnection():
     try:
@@ -132,12 +138,14 @@ def validInternetConnection():
         flash('Internet is down - try again later', 'danger')
         return False
 
+
 #Get spotify authtication URL
 def get_auth_url():
     with app.app_context():
         oauth_object = spotipy.SpotifyOAuth(clientID, clientSecret, redirectURI, scope=scope)
         auth_url = oauth_object.get_authorize_url()
         return auth_url
+
 
 #Called when user logs in or registers - it authenticates with spotify to gain permission to create/update/delete playlists
 def connectToSpotify(username):
@@ -187,6 +195,7 @@ def basic_error(e):
     print("An error occured:" + msg + str(e))
     return redirect(url_for('welcome'))
 
+
 class RegisterForm(Form):
     # name = StringField('Name', [validators.Length(min=1, max=50)])
     username = StringField('Username', [validators.Length(min=4, max=25)])
@@ -233,12 +242,13 @@ def is_logged_in(user):
             return redirect(url_for('login'))
     return wrap
 
-#When user logs out clear all thier data from the flask session object
+
+#When user logs out clear all their data from the flask session object
 def clearUser():
     session.clear()
 
 
-#delete user from the database
+#delete user from the database and delete spotify cache file
 @app.route('/delete_user')
 @is_logged_in
 def delete_user():
@@ -256,6 +266,7 @@ def delete_user():
         return redirect(url_for('welcome'))
 
 
+#logs out user
 @app.route('/logout')
 @is_logged_in
 def logout():
@@ -271,10 +282,13 @@ def dashboard():
     playLists = dbGetUserPlaylists(session['id'])
     return render_template('userDashboard.html', playlists=playLists)  # sends in the playlist we just got from database
 
+
 class make_playlist(Form):
     title = StringField('Name', [validators.Length(min=1, max=25)])
 
 
+#creates a playlist enters it in the db
+#also creates a playlist on spotify
 @app.route('/create_playlist', methods=['GET', 'POST'])
 @is_logged_in
 def create_playlist():
@@ -308,7 +322,7 @@ def create_playlist():
     return render_template('add_playlist.html', form=form)  # open function in add_playlist.html
 
 
-
+#sets the movie as the playlist name and gets the officail soundtrack
 @app.route('/pickMovie', methods=['GET', 'POST'])
 @is_logged_in
 def pickMovie():
@@ -345,10 +359,7 @@ def pickMovie():
     return redirect(url_for('dashboard'))
 
 
-def get_playlistId(playListName):
-    pass
-
-
+#deletes playlist from db
 @app.route('/delete_playlist/<string:playlist>')
 @is_logged_in
 def delete_playlist(playlist):
@@ -371,6 +382,8 @@ def delete_playlist(playlist):
     return redirect(url_for('dashboard'))
 
 
+#reigsters new account
+# adds it to db
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
@@ -480,10 +493,8 @@ def contact():
 def movie():
     return render_template('movie.html')
 
-########################################################################################################################
-# Javascript callbacks
-########################################################################################################################
 
+# Javascript callbacks
 #Save the tracks picked by the user for their playlist. Update Spotify playlist
 @app.route('/updateTracks', methods=['POST'])
 def updateTracks():
@@ -590,6 +601,8 @@ def getRecommendedTracks():
     response.status_code = 500
     return response
 
+
+#from JavaScript - add comments to database
 @app.route('/update_comments', methods=['POST'])
 def update_comments():
     data = request.get_json()
@@ -603,10 +616,8 @@ def update_comments():
 
     return 'Table data received and processed successfully'
 
-########################################################################################################################
-# Database functions
-########################################################################################################################
 
+#Get spotify link to playlist from the DB
 def dbGetSpotifyLink(userId, playlistName):
     try:
         with mysql.connection.cursor() as cursor:
@@ -623,6 +634,8 @@ def dbGetSpotifyLink(userId, playlistName):
 
     return False
 
+
+#Delete a Playlist from the database
 def dbDeletePlayList(userId, playlistName):
     try:
         with mysql.connection.cursor() as cursor:
@@ -638,10 +651,10 @@ def dbDeletePlayList(userId, playlistName):
     except Exception as e:
         print("dbDeletePlayList Error: ", e)
         flash("Database error deleting playlist:" + str(e), 'danger')
-
     return False
 
 
+#Check the email is unique
 def dbCheckNameOrEmailExists(username, email):
     #
     try:
@@ -662,9 +675,9 @@ def dbCheckNameOrEmailExists(username, email):
 
     return False
 
-def dbCreateAccount(username, email, password, spotifyId):
-    #
 
+#Create a user in the database
+def dbCreateAccount(username, email, password, spotifyId):
     try:
         with mysql.connection.cursor() as cursor:
             cursor.execute("INSERT INTO friends(email,username,password,spotifyId) VALUES(%s,%s,%s,%s)",
@@ -677,6 +690,8 @@ def dbCreateAccount(username, email, password, spotifyId):
 
     return True
 
+
+#Create a new playlist in the database
 def dbCreatePlaylist(userId, theMovieName, playListId, poster, albumId):
     try:
         with mysql.connection.cursor() as cursor:
@@ -696,6 +711,8 @@ def dbCreatePlaylist(userId, theMovieName, playListId, poster, albumId):
         flash("Database error getting playlists:" + str(e), 'danger')
         return False
 
+
+#update likes on a playlist
 def dbSetLikes(likes, spotifyLink):
     try:
         with mysql.connection.cursor() as cursor:
@@ -705,6 +722,8 @@ def dbSetLikes(likes, spotifyLink):
     except Exception as e:
         print('Error: update_likes: ', e)
 
+
+#
 @app.route('/update_likes', methods=['POST'])
 def update_likes():
     data = request.get_json()
@@ -716,6 +735,8 @@ def update_likes():
 
     return 'Table data received and processed successfully'
 
+
+#add a comment from a friend to the comment table
 def dbAddComment(comment, username, spotifyLink):
     try:
         with mysql.connection.cursor() as cursor:
@@ -741,6 +762,8 @@ def dbDeleteUser(userId):
         flash("Database error deleting user:" + str(e), 'danger')
         return False
 
+
+#retrives all other users
 def dbGetFriends(userId):
     try:
         with mysql.connection.cursor() as cursor:
@@ -763,6 +786,7 @@ def dbGetFriends(userId):
     return friendsPlaylist
 
 
+#gets username from the dB
 def dbGetUserName(userId):
     try:
         with mysql.connection.cursor() as cursor:
@@ -778,6 +802,7 @@ def dbGetUserName(userId):
     return False
 
 
+#get playlist details from database using the spotify playlst id
 def dbGetPlaylist(spotifylink):
     try:
         with mysql.connection.cursor() as cursor:
@@ -793,6 +818,7 @@ def dbGetPlaylist(spotifylink):
         return None
 
 
+#Get comments for a playlist using the playlist ID of the playlist
 def dbGetComments(spotifylink):
     with mysql.connection.cursor() as cursor:  # will close the cursor
         try:
@@ -803,6 +829,7 @@ def dbGetComments(spotifylink):
     return result
 
 
+#Get user account detauls from the friends table of DB
 def dbGetUserData(username):
     try:
         with mysql.connection.cursor() as cursor:
@@ -816,6 +843,8 @@ def dbGetUserData(username):
         raise(e)
     return False
 
+
+#retrievs all playlists maade by the user
 def dbGetUserPlaylists(userId):
     try:
         with mysql.connection.cursor() as cursor:
@@ -833,6 +862,7 @@ def dbGetUserPlaylists(userId):
         return []
 
 
+#displays official soundtrack
 def dbGetOfficialSoundtrack(movieName, userId):
     try:
         with mysql.connection.cursor() as cursor:
