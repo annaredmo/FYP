@@ -22,12 +22,16 @@ import logging
 log_to_file = False  # set this to True if you want to log to a file when moving to AWS:-)
 
 if log_to_file:
-    logging.basicConfig(filename='app.log', level=logging.INFO)
+    logging.basicConfig(filename='app.log', level=logging.DEBUG)
 else:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG) #or .DEBUG
 
 app = Flask(__name__)
-app.secret_key = 'fantrax1234'
+app.secret_key = 'fantrax12345'
+app.config['DEBUG'] = False
+app.config['USE_DEBUGGER'] = False
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+
 
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
@@ -84,8 +88,6 @@ def spotipyConnection():
         print('SpotifpyConnection:', e)
     return 0,0
 
-#Just return the object - dont need the id
-
 
 def getSpotifyObject():
     sp, spId = spotipyConnection()
@@ -117,7 +119,6 @@ def callback():
             #registering - spotify looks ok
             dbCreateAccount(session['username'], session['email'], session['password'], spotifyId)
             clearUser()
-            flash("Successfully created new user: "+ session['username'] , 'success')
             return redirect(url_for('login'))  # send user to welcome
 
     except spotipy.SpotifyException as e:
@@ -150,17 +151,14 @@ def get_auth_url():
 #Called when user logs in or registers - it authenticates with spotify to gain permission to create/update/delete playlists
 def connectToSpotify(username):
     try:
-        print('connectToSpotify: login to Spotipy and approve ')
-
         if validInternetConnection():
             auth_url = get_auth_url() #get the spotify authenticate url
-            print('connectToSpotify:', auth_url,username,session)  #
             # Call the spotify authorisation - which will call the callback() function when user autheticates
             return redirect(auth_url)
 
     except spotipy.SpotifyException as e:
         print("connectToSpotify: SpotifyException", e)
-        flash("connectToSpotify: Failed to log into spotify hhhhh", 'danger')
+        flash("connectToSpotify: Failed to log into spotify", 'danger')
     except spotipy.SpotifyOauthError as e:
         print("connectToSpotify: SpotifyOauthError", e)
     except requests.ConnectionError:
@@ -493,8 +491,10 @@ def contact():
 def movie():
     return render_template('movie.html')
 
-
+########################################################################################################################
 # Javascript callbacks
+########################################################################################################################
+
 #Save the tracks picked by the user for their playlist. Update Spotify playlist
 @app.route('/updateTracks', methods=['POST'])
 def updateTracks():
@@ -583,7 +583,6 @@ def getRecommendedTracks():
             results = sp.search(soundTrack + ' soundtrack', 10, 0, type="album")
             if results:
                 album_id = results['albums']['items'][0]['id']
-                #print('album id',album_id)
                 lst = sp.album_tracks(album_id)
                 for j in lst['items']:      # make sure track is not already picked
                     id=j['id']
@@ -616,6 +615,24 @@ def update_comments():
 
     return 'Table data received and processed successfully'
 
+
+@app.route('/update_likes', methods=['POST'])
+def update_likes():
+    data = request.get_json()
+    table_data = data['table_data']
+    likes = table_data.get('likes')
+    spotifyLink = table_data.get('spotifyLink')
+    if likes and spotifyLink:
+        dbSetLikes(likes, spotifyLink)
+
+
+    return jsonify('Table data received and processed successfully')
+
+
+
+########################################################################################################################
+#                   Datbase functions
+########################################################################################################################
 
 #Get spotify link to playlist from the DB
 def dbGetSpotifyLink(userId, playlistName):
@@ -721,20 +738,6 @@ def dbSetLikes(likes, spotifyLink):
             cursor.connection.commit()
     except Exception as e:
         print('Error: update_likes: ', e)
-
-
-#
-@app.route('/update_likes', methods=['POST'])
-def update_likes():
-    data = request.get_json()
-    table_data = data['table_data']
-    likes = table_data.get('likes')
-    spotifyLink = table_data.get('spotifyLink')
-    if likes and spotifyLink:
-        dbSetLikes(likes, spotifyLink)
-
-    return 'Table data received and processed successfully'
-
 
 #add a comment from a friend to the comment table
 def dbAddComment(comment, username, spotifyLink):

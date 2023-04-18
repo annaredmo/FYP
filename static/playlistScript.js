@@ -20,6 +20,7 @@ async function submitComment() {
     body: JSON.stringify({table_data: data})
   });
   if (response.ok) {
+    conolse.log('Added comment')
     var tableBody = document.getElementById("commentlist");
     var newRow = document.createElement("tr");
     var newCell = document.createElement("td");
@@ -31,26 +32,60 @@ async function submitComment() {
     console.error('Network response was not ok');
   }
 }
+async function incrementLikes() {
+  var countEl = document.getElementById('like-count');
+  var count = parseInt(countEl.innerHTML);
 
- async function incrementLikes() {
-    var countEl = document.getElementById('like-count');
-    var count = parseInt(countEl.innerHTML);
-    countEl.innerHTML = count + 1;
+  var spotifyLink = document.getElementById("playlist-id-playlist").value;
+  const data = {
+    likes: count + 1,
+    spotifyLink: spotifyLink
+  };
 
-    var spotifyLink = document.getElementById("playlist-id-playlist").value;
-    const data = {
-      likes: count+1,
-      spotifyLink: spotifyLink
-    };
-
-    const response = await fetch('/update_likes', {
+  const response = await fetch('/update_likes', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({table_data: data})
+    body: JSON.stringify({ table_data: data }),
+
   });
+
   if (!response.ok) {
     console.error('Network response was not ok');
+  } else {
+    console.log('Added like');
+    countEl.innerHTML = count + 1;
   }
- }
+}
+
+
+
+// async function incrementLikes() {
+//
+//    var countEl = document.getElementById('like-count');
+//    var count = parseInt(countEl.innerHTML);
+//
+//    var spotifyLink = document.getElementById("playlist-id-playlist").value;
+//    const data = {
+//      likes: count+1,
+//      spotifyLink: spotifyLink
+//    };
+//
+//    const response = await fetch('/update_likes', {
+//    method: 'POST',
+//    headers: {
+//      'Content-Type': 'application/json'
+//    },
+//    body: JSON.stringify({table_data: data})
+//    });
+//    if (!response.ok) {
+//      console.error('Network response was not ok');
+//   }
+//   else {
+//       console.log('Added like')
+//       countEl.innerHTML = count + 1;
+//
+//   }
+//
+// }
