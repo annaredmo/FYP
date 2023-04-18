@@ -28,7 +28,7 @@ else:
 
 app = Flask(__name__)
 app.secret_key = 'fantrax12345'
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 app.config['USE_DEBUGGER'] = False
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
