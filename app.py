@@ -24,7 +24,7 @@ log_to_file = False  # set this to True if you want to log to a file when moving
 if log_to_file:
     logging.basicConfig(filename='app.log', level=logging.DEBUG)
 else:
-    logging.basicConfig(level=logging.DEBUG) #or .DEBUG
+    logging.basicConfig(level=logging.INFO) #or .DEBUG
 
 app = Flask(__name__)
 app.secret_key = 'fantrax12345'
@@ -62,7 +62,7 @@ def spotipyConnection():
                     oauth_object.access_token = new_token['access_token']
                     session['spotifyOathObject'] = pickle.dumps(oauth_object)
                 spotifyObject = spotipy.Spotify(auth_manager=oauth_object)
-                spotifyId = spotifyObject.me()['id']
+                spotifyId = spotifyObject.me() #session['spotifyId'] could get it here - but want to test link is up
 
             except spotipy.SpotifyException as e:
                 print("spotipyConnection: SpotifyException", e)
@@ -885,4 +885,6 @@ def dbGetOfficialSoundtrack(movieName, userId):
 if __name__ == '__main__':
 
     app.run()
+    app.config['TIMEOUT'] = 60
+
 

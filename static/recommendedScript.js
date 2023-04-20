@@ -101,28 +101,31 @@ function fetchAndHandleResponse(url, data, title) {
     }
   })
   .catch(error => {
+    console.log('Recommended: Error getting data')
     window.location.href = "{{ url_for('dashboard') }}";
 
   });
 }
+
 
 async function saveTracks() {
   const tableData = get_playlist_ids();
 
-  const response = await fetch('/updateTracks', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({table_data: tableData})
-  });
+  try {
+    const response = await fetch('/updateTracks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({table_data: tableData}),
+      timeout: 60000
+    });
 
-  if (response.ok) {
     console.log('Table data was successfully sent to the server');
-  } else {
-    console.error('Network response was not ok');
+  } catch (error) {
+    console.error('An error occurred:', error);
     window.location.href = "{{ url_for('dashboard') }}";
-
   }
 }
+
 

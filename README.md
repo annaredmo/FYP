@@ -22,14 +22,14 @@
         OR change the values in the app.py and create_database.py
 		
 # INSTALL APPLICATION
-	- unzip FanTrax.zip into you folder (venv)
+	- unzip FanTrax.zip into you folder (careful Defender doesn't delete Files!)
 	- cd into FanTrax
 
 # INSTALL PACKAGES
-	- pip install --use-pep517 -r requirements.txt
+	pip install --use-pep517 -r requirements.txt
 
 # INSTALL MYSQL DATABASE
-	- python create_database.py (make sure you set env variables OR edit script and set manually) 
+	python create_database.py (make sure you set env variables OR edit script and set manually) 
 		OR create the database fan_tracks using MySQL)
 
 # RUN FanTrax
@@ -42,7 +42,8 @@
             can use the one spotify account.
 	- On Login or Register you will be directed to Spotify to authenticate - on completion you will 
 		be brought back to FanTrax - you have to complete this step
-    - If you do not have a Spotify account - this account and password are available
+    - To login using you own Spotify account - you will need to contact the developer to be added via the
+        the Spotify Developer Dashboard. Or you can use the following account and password 
         until August 2023 username:annaredmo@gmail.com password:fyppassword
 
 # POSSIBLE ISSUES
