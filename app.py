@@ -19,12 +19,7 @@ import pickle
 import ast
 
 import logging
-log_to_file = False  # set this to True if you want to log to a file when moving to AWS:-)
 
-if log_to_file:
-    logging.basicConfig(filename='app.log', level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO) #or .DEBUG
 
 app = Flask(__name__)
 app.secret_key = 'fantrax12345'
@@ -47,6 +42,15 @@ redirectURI = os.environ.get('FanTraxRedirectURI', "http://localhost:5000/auth/c
 scope = 'playlist-read-private playlist-modify-private playlist-modify-public ugc-image-upload'
 
 ia = imdb.IMDb()
+
+
+class TimeoutErrorFilter(logging.Filter):
+    def filter(self, record): #don't affect functionality
+        return 'Request timed out' not in record.getMessage()
+
+# Configure the Werkzeug logger with a custom handler
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.setLevel(logging.INFO)
 
 #Connects to Spotify
 def spotipyConnection():

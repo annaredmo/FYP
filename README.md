@@ -20,6 +20,8 @@
 		- MYSQL_USER <username>
 		- MYSQL_PASSWORD <password>
         OR change the values in the app.py and create_database.py
+    - make user mysql.exe is on path (for creating the databse) - usually in
+        C:\Program Files\MySQL\MySQL Server 8.0\bin\
 		
 # INSTALL APPLICATION
 	- unzip FanTrax.zip into you folder (careful Defender doesn't delete Files!)
