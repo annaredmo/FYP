@@ -20,12 +20,9 @@ import ast
 
 import logging
 
-
 app = Flask(__name__)
-app.secret_key = 'fantrax12345'
+app.secret_key = 'fantrax123456'
 app.config['DEBUG'] = True
-app.config['USE_DEBUGGER'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
@@ -45,12 +42,12 @@ ia = imdb.IMDb()
 
 
 class TimeoutErrorFilter(logging.Filter):
-    def filter(self, record): #don't affect functionality
+    def filter(self, record):
         return 'Request timed out' not in record.getMessage()
 
-# Configure the Werkzeug logger with a custom handler
+# Occasional timeout errors don't effect functionality - depends on browser
 werkzeug_logger = logging.getLogger('werkzeug')
-werkzeug_logger.setLevel(logging.INFO)
+werkzeug_logger.addFilter(TimeoutErrorFilter())
 
 #Connects to Spotify
 def spotipyConnection():
@@ -529,7 +526,6 @@ def searchForMatchingTracks():
 
         results = getSpotifyObject().search(searchName, 10, 0, "track")
         songs_dict = results['tracks']
-        song_items = songs_dict['items']
 
         lst = results['tracks']
         trackList = []
@@ -604,6 +600,16 @@ def getRecommendedTracks():
     response.status_code = 500
     return response
 
+@app.route('/update_likes', methods=['GET','POST'])
+def update_likes():
+    data = request.get_json()
+    table_data = data['table_data']
+    likes = table_data.get('likes')
+    spotifyLink = table_data.get('spotifyLink')
+    if likes and spotifyLink:
+        dbSetLikes(likes, spotifyLink)
+    return jsonify('Table data received and processed successfully')
+
 
 #from JavaScript - add comments to database
 @app.route('/update_comments', methods=['POST'])
@@ -613,24 +619,11 @@ def update_comments():
     comment = table_data.get('comment')
     spotifyLink = table_data.get('spotifyLink')
     username = table_data.get('username')
-
     if comment and username and spotifyLink:
         dbAddComment(comment, username, spotifyLink)
-
     return 'Table data received and processed successfully'
 
 
-@app.route('/update_likes', methods=['POST'])
-def update_likes():
-    data = request.get_json()
-    table_data = data['table_data']
-    likes = table_data.get('likes')
-    spotifyLink = table_data.get('spotifyLink')
-    if likes and spotifyLink:
-        dbSetLikes(likes, spotifyLink)
-
-
-    return jsonify('Table data received and processed successfully')
 
 
 
@@ -889,6 +882,5 @@ def dbGetOfficialSoundtrack(movieName, userId):
 if __name__ == '__main__':
 
     app.run()
-    app.config['TIMEOUT'] = 60
 
 

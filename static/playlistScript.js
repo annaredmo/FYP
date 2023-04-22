@@ -1,4 +1,9 @@
-// Submit the comment
+/*
+ *   playlistScript.js - Javascript functions for the playlist screen
+ */
+
+// call server to add a new comment in databse for playlist
+// and comment to screen
 async function submitComment() {
   var comment = commentTextarea.value;
   hideCommentModal();
@@ -37,8 +42,8 @@ async function submitComment() {
   }
 }
 
-
-
+// call server to update likes in databse for playlist
+// and update likes on screen
 async function incrementLikes() {
 
   var countEl = document.getElementById('like-count');

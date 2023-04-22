@@ -1,8 +1,13 @@
+/*
+ *   recommendedScript.js - Javascript functions for the playlist screen
+ */
+
+// Remove a track from the list on screen
 function removeTrack(pressedRow) {
     /* This method will delete a row */
     pressedRow.parentNode.parentNode.remove();
     }
-
+// Add a track to the selected tracks list on screen
 function transferTrack(pressedRow) {
       // Get the clicked row and its first data cell
       const clickedRow = pressedRow.parentNode.parentNode;
@@ -65,14 +70,17 @@ function getRecommendedracks() {
   fetchAndHandleResponse('/getRecommendedTracks', {table_data: tableData }, "Pick From Recommended Tracks...");
 
 }
-
+//Call server to get a list of songs that match whats entered in the search box
 function searchTracks() {
   const tableData = get_playlist_ids();
   const songName = document.getElementById("song-name").value;
-  fetchAndHandleResponse('/searchForMatchingTracks', { song_name: songName, table_data: tableData }, "Pick from Searched Tracks...");
+  if (songName){
+      fetchAndHandleResponse('/searchForMatchingTracks', { song_name: songName, table_data: tableData }, "Pick from Searched Tracks...");
+  }
 }
 
-function fetchAndHandleResponse(url, data, title) {
+//Call out to the server url to send data and recieve new tracks - for 'title'
+async function fetchAndHandleResponse(url, data, title) {
   fetch(url, {
     method: 'POST',
     headers: {
@@ -107,7 +115,7 @@ function fetchAndHandleResponse(url, data, title) {
   });
 }
 
-
+//Call out to server to save tracks to Spotify
 async function saveTracks() {
   const tableData = get_playlist_ids();
 

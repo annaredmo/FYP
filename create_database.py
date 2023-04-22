@@ -4,7 +4,7 @@ import subprocess
 
 
 # Setting up the database for FanTrax
-#Please set envirooment cariables for MYSQL_USER and MYSQL_PASSWORD or update the python variables
+#Please set envirooment cariables for MYSQL_USER and MYSQL_PASSWORD OR update the python variables below
 
 host = os.environ.get('MYSQL_HOST', 'localhost')
 user = os.environ.get('MYSQL_USER', 'root')

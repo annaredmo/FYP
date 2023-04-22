@@ -3,7 +3,7 @@
             soundtrack for a film of their choice 
 	
 # WHAT PLATFORMS ARE SUPPORTED
-	Runs on Windows 10. 
+	Runs on Windows 10
 	
 # REQUIREMENTS
 	- MySQL - with database create permissions
@@ -51,7 +51,4 @@
 # POSSIBLE ISSUES
     - multiple FanTrax servers running on the one machine could cause issues. As session data persists in 
         memory
-    - occasionaly if the internet is slow this error will be seen outputed from the server. It
-        does not effect the functionality - which works as expected
-        ERROR:werkzeug:127.0.0.1 - - [11/Apr/2023 16:36:29] Request timed out: TimeoutError('timed out')
     - occacional issues with login - again when internet is slow 
