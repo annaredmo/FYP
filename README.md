@@ -1,6 +1,20 @@
 # WHAT IS THIS
 	Annas FanTrax ... user interface that allows a user to create their own 
             soundtrack for a film of their choice 
+# OVERVIEW
+	- The Database is pre-loaded with users and Playlists - to login to this app you can use
+            username:coolguy password:123 (different to the spotify account). Many app user accounts
+            can use the one spotify account.
+	- On Login or Register you will be directed to Spotify to authenticate - on completion you will 
+		be brought back to FanTrax - you have to complete this step
+    - To login using you own Spotify account - you will need to contact the developer to be added via the
+        the Spotify Developer Dashboard. Or you can use the following account and password 
+        until August 2023 username:annaredmo@gmail.com password:fyppassword
+
+# POSSIBLE ISSUES
+    - multiple FanTrax servers running on the one machine could cause issues. As session data persists in 
+        memory
+    - occacional issues with login - again when internet is slow 
 	
 # WHAT PLATFORMS ARE SUPPORTED
 	Runs on Windows 10
@@ -38,17 +52,3 @@
 	- flask run OR python app.py
 	- Open Web Browser on 127.0.0.1:5000
 	
-# OVERVIEW
-	- The Database is pre-loaded with users and Playlists - to login to this app you can use
-            username:coolguy password:123 (different to the spotify account). Many app user accounts
-            can use the one spotify account.
-	- On Login or Register you will be directed to Spotify to authenticate - on completion you will 
-		be brought back to FanTrax - you have to complete this step
-    - To login using you own Spotify account - you will need to contact the developer to be added via the
-        the Spotify Developer Dashboard. Or you can use the following account and password 
-        until August 2023 username:annaredmo@gmail.com password:fyppassword
-
-# POSSIBLE ISSUES
-    - multiple FanTrax servers running on the one machine could cause issues. As session data persists in 
-        memory
-    - occacional issues with login - again when internet is slow 
